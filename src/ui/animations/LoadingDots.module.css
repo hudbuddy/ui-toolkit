@@ -1,0 +1,23 @@
+.dot1 {
+  animation: load 1s infinite;
+}
+.dot2 {
+  animation: load 1s infinite;
+  animation-delay: 0.2s;
+}
+.dot3 {
+  animation: load 1s infinite;
+  animation-delay: 0.4s;
+}
+
+@keyframes load {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

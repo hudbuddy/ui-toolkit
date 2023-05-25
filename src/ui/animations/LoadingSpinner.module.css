@@ -1,0 +1,56 @@
+.one {
+  animation-delay: 0.3s !important;
+}
+.two {
+  animation-delay: 0.53837s !important;
+}
+.three {
+  animation-delay: 0.7334s !important;
+}
+.four {
+  animation-delay: 0.9501s !important;
+}
+.five {
+  animation-delay: 1.1668000000000003s !important;
+}
+.six {
+  animation-delay: 1.3834999999999997s !important;
+}
+
+@keyframes lightstreamit {
+  0% {
+    opacity: 0.15;
+  }
+  20% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.15;
+  }
+}
+.st0 {
+  display: none;
+}
+.st1 {
+  display: inline;
+  fill: #333333;
+}
+.st2 {
+  display: inline;
+}
+.st3 {
+  clip-path: url(#SVGID_2_);
+}
+.st4 {
+  fill: none;
+  stroke: #1c1c1c;
+  stroke-miterlimit: 10;
+}
+.st5 {
+  position: relative;
+  opacity: 0.15;
+  animation: lightstreamit 1.3s infinite linear forwards;
+}
