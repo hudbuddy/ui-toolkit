@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react'
-import { CriterionData, getCriterionStatistics } from './criterion-data'
+import { CriterionData, Review, getCriterionStatistics } from './criterion-data'
 
 export enum DateRange {
   PAST_WEEK,
@@ -55,12 +55,27 @@ export const DATE_RANGES = {
   } as RangeData,
 }
 
+type ReviewFilter = (review: Review, filters: ActiveReviewFilters) => boolean
+export const filterFns = [
+  (review, filters) => !filters.commentsOnly || review.comment?.length > 0,
+  (review, filters) => filters.ratings.includes(review.rating),
+] satisfies ReviewFilter[]
+
 const CriterionContext = createContext<CriterionState>({} as CriterionState)
 type CriterionState = {
   data: CriterionData
+  filteredReviews: Review[]
   dateRange: DateRange
   rangeData: RangeData
+  filters: ActiveReviewFilters
+  isAnyFilterSet: boolean
   setDateRange: (range: DateRange) => void
+  setFilters: (filters: ActiveReviewFilters) => void
+}
+
+type ActiveReviewFilters = {
+  commentsOnly: boolean
+  ratings: number[]
 }
 
 export const CriterionProvider = ({ children }: { children: ReactNode }) => {
@@ -68,10 +83,29 @@ export const CriterionProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState<CriterionData>(DATE_RANGES[dateRange]._cache)
   DATE_RANGES[dateRange]._cache = data
 
+  // Filters
+  const [filteredReviews, setFilteredReviews] = useState<Review[]>([])
+  const [filters, setFilters] = useState<ActiveReviewFilters>({
+    commentsOnly: false,
+    ratings: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  })
+
+  const isAnyFilterSet = filters.commentsOnly || filters.ratings.length !== 10
+
   useEffect(() => {
     if (DATE_RANGES[dateRange]._cache) return
     getCriterionStatistics(DATE_RANGES[dateRange].days).then(setData)
   }, [dateRange])
+
+  useEffect(() => {
+    if (!data) return
+    // Run filters
+    const filtered = filterFns.reduce(
+      (acc, fn) => acc.filter((x) => fn(x, filters)),
+      data.reviews,
+    )
+    setFilteredReviews(filtered)
+  }, [JSON.stringify(filters), data?.reviews, filters])
 
   return (
     <CriterionContext.Provider
@@ -80,6 +114,10 @@ export const CriterionProvider = ({ children }: { children: ReactNode }) => {
         rangeData: DATE_RANGES[dateRange],
         setDateRange,
         data,
+        filters,
+        filteredReviews,
+        setFilters,
+        isAnyFilterSet,
       }}
     >
       {children}

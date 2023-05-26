@@ -1,13 +1,13 @@
-import * as RM from '@rainmaker/ui'
 import moment from 'moment'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { useParams } from 'react-router-dom'
 import { useAdmin } from '../../../Admin'
 import { Page } from '../../../Page'
 import { Box, Column, Row, WrapBox, wrapBox } from '../../../ui/Layout'
+import { Button } from '../../../ui/buttons/Button'
+import { BrandBubbleList } from '../../../ui/icons/BrandBubble'
 import { FaIcon } from '../../../ui/icons/Icon'
-import { PlatformBubbleList } from '../../../ui/icons/PlatformBubble'
 import { bar } from '../../../utils/chart'
 import { userBroadcastOverview } from './studio-user-charts'
 import {
@@ -26,7 +26,9 @@ import {
   useCurrentStudioUser,
   useStudio,
 } from './studio-user-context'
-import { Button } from '../../../ui/buttons/Button'
+import { useSidebar } from '../../../SideBar'
+import { Heading2 } from '../../../ui'
+import { useAPI } from '../../../utils/fetch-api'
 
 const panelBackground = 'rgba(0, 0, 0, 0.15)'
 
@@ -100,9 +102,9 @@ const HeaderLeft = wrapBox(() => {
             marginLeft={6}
           />
         </Row>
-        <PlatformBubbleList
+        <BrandBubbleList
           size={29}
-          platforms={user.accounts.map((x) => x.type) as any}
+          names={user.accounts.map((x) => x.type)}
           marginLeft={20}
         />
       </Row>
@@ -141,13 +143,7 @@ const HeaderRight = wrapBox(() => {
           // TODO: Flag broadcast
         }}
       >
-        <FaIcon
-          fields={{ className: 'flag-icon', tooltip: 'View Flagged Broadcasts' }}
-          name="faFlag"
-          type="solid"
-          height={18}
-          width={18}
-        />
+        <FaIcon name="faFlag" type="solid" height={18} width={18} />
         <Box marginLeft={4} fontSize={12}>
           {flaggedBroadcastCount}
         </Box>
@@ -277,6 +273,20 @@ const ControlPanel = () => {
 
 const NPS = () => {
   const { criterion } = useCurrentStudioUser()
+  const { setSidebar } = useSidebar()
+
+  // TODO: Iterate attempts - if reviewed=true, populate with review data
+
+  const viewDetails = useCallback(() => {
+    setSidebar({
+      header: (
+        <Row alignItems="center">
+          <Heading2 text="Criterion Review History" />
+        </Row>
+      ),
+      body: <Column></Column>,
+    })
+  }, [])
 
   return (
     <Column background={panelBackground} padding={20}>
@@ -298,7 +308,7 @@ const NPS = () => {
           </Row>
         </Column>
       </Row>
-      <ListButton marginTop={14} onClick={() => alert(1)}>
+      <ListButton marginTop={14} onClick={() => viewResponses}>
         View Responses
       </ListButton>
     </Column>

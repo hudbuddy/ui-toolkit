@@ -544,7 +544,7 @@ const MOCK = {
       comment: 'easy to use for console streamers ',
       platform: 'twitchtv',
       product: 'studio',
-      timestamp: '2023-05-09T11:06:11.235Z',
+      timestamp: '2023-04-09T11:06:11.235Z',
       formattedTimestamp: 'May 9 2023',
       deleted: false,
     },

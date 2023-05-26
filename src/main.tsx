@@ -5,6 +5,7 @@ import { ThemeProvider } from 'styled-components'
 import { SidebarProvider } from './SideBar'
 import { AdminProvider } from './Admin'
 import * as RM from '@rainmaker/ui'
+import './styles/rm-flex.scss'
 import './styles/index.css'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

@@ -4,6 +4,8 @@ import { Box, Column, Row } from './ui/Layout'
 import useRenderTransition from './ui/hooks/useRenderTransition'
 import { subscribeToEscape } from './utils/escape-context'
 
+const isEmbedded = window.self !== window.top
+
 const Underlay = () => {
   const { closeSidebar } = useSidebar()
 
@@ -16,7 +18,7 @@ const Underlay = () => {
         width: '100vw',
         height: '100vh',
         position: 'absolute',
-        backgroundColor: 'rgba(0,0,0,30%)',
+        backgroundColor: isEmbedded ? 'transparent' : 'rgba(0,0,0,30%)',
       }}
     />
   )

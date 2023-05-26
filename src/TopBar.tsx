@@ -13,7 +13,7 @@ export const TopBar = () => {
         padding: 16,
       }}
     >
-      <Icon name="Lightstream" fontSize={30} />
+      <Icon name="Lightstream" size={30} />
     </div>
   )
 }

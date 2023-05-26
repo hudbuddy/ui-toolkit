@@ -1,0 +1,78 @@
+/**
+ * Rainmaker flex styles
+ */
+
+$directions: (column, column-reverse, row, row-reverse);
+$alignments: (
+  center: center,
+  end: flex-end,
+  start: flex-start,
+  between: space-between,
+  around: space-around,
+);
+$layouts: (
+  5,
+  10,
+  15,
+  20,
+  25,
+  30,
+  33,
+  35,
+  40,
+  45,
+  50,
+  55,
+  60,
+  65,
+  66,
+  70,
+  75,
+  80,
+  85,
+  90,
+  95,
+  100
+);
+$breakpoints: (
+  xs: '(max-width: 599px)',
+  sm: '(min-width: 600px) and (max-width: 959px)',
+  md: '(min-width: 960px)',
+);
+
+@each $direction in $directions {
+  .layout-#{$direction} {
+    display: flex;
+    flex-direction: $direction;
+
+    &.layout-wrap {
+      flex-wrap: wrap;
+    }
+  }
+}
+
+@each $direction in map-keys($alignments) {
+  @each $altDirection in map-keys($alignments) {
+    .layout-align-#{$direction}-#{$altDirection} {
+      place-content: map-get($alignments, $altDirection)
+        map-get($alignments, $direction);
+      justify-content: map-get($alignments, $direction);
+      align-items: map-get($alignments, $altDirection);
+    }
+  }
+}
+
+@each $layout in $layouts {
+  .flex-#{$layout} {
+    flex: 1 1 100%;
+    box-sizing: border-box;
+  }
+
+  .layout-row > .flex-#{$layout} {
+    max-width: $layout * 1%;
+  }
+
+  .layout-column > .flex-#{$layout} {
+    max-height: $layout * 1%;
+  }
+}

@@ -6,7 +6,7 @@ import { Page } from '../../../Page'
 import { Broadcast, BroadcastsTable } from '../../../components/BroadcastsTable'
 import { Button, Heading2, IconButton, Label, TextItem } from '../../../ui'
 import { Box, Column, Row } from '../../../ui/Layout'
-import { PlatformBubble } from '../../../ui/icons/PlatformBubble'
+import { BrandBubble } from '../../../ui/icons/BrandBubble'
 import { fetchAPI } from '../../../utils/fetch-api'
 import {
   ChargebeeIcon,
@@ -178,7 +178,7 @@ const DestinationItem = ({
             justifyContent: 'center',
           }}
         >
-          <PlatformBubble type={destination.metadata.props.type} />
+          <BrandBubble name={destination.metadata.props.type as any} />
         </div>
         <TextItem
           text={

@@ -1,26 +1,22 @@
 import React, { useRef } from 'react'
 import { classes, style } from 'typestyle'
-import * as Color from '../colors'
-import { Icon, IconName } from '../icons/Icon'
 import { Box } from '../Layout'
-import { TextBuilder, TextBuilderProps, CustomText } from '../text/Text'
+import * as Color from '../colors'
+import { Icon } from '../icons/Icon'
+import { CustomText, TextBuilder, TextBuilderProps } from '../text/Text'
 
 export type CheckboxProps = {
   checked: boolean
   onChange: (value: boolean) => void
-  uncheckedIcon?: IconName
-  checkedIcon?: IconName
   appearance?: 'outline' | 'icon'
   disabled?: boolean
   text?: string | TextBuilderProps['text']
-  color?: Color.Type
-  colorWeight?: number
-  iconColor?: Color.Type
-  iconColorWeight?: number
-  fillColor?: Color.Type
-  fillColorWeight?: number
   width?: React.CSSProperties['width']
   height?: React.CSSProperties['height']
+  fillColor?: Color.Type
+  fillColorWeight?: number
+  color?: Color.Type
+  colorWeight?: number
   focusIndicator?: boolean
   // Area filled as a scalar
   iconScale?: number
@@ -44,22 +40,19 @@ const Checkbox = ({
   onChange,
   appearance,
   text,
-  width = '100%',
-  height = '100%',
-  uncheckedIcon,
-  checkedIcon = 'Checkmark',
-  disabled = false,
-  iconScale = 1.2,
-  iconUncheckedOpacity = 0.5,
+  width = 20,
+  height = 20,
   color = 'neutral',
   colorWeight = 500,
   fillColor,
   fillColorWeight = 500,
-  iconColor = 'neutral',
-  iconColorWeight = 0,
+  content,
+  disabled = false,
   focusIndicator = false,
   children,
-}: CheckboxProps) => {
+}: CheckboxProps & {
+  content?: React.ReactNode
+}) => {
   const input = useRef(null)
 
   const onClick = () => {
@@ -75,7 +68,9 @@ const Checkbox = ({
       onClick={onClick}
       onFocus={onFocus}
       height={height}
+      flexBasis="fit-content"
       alignItems="center"
+      justifyContent="flex-start"
       inline={true}
       className={style({
         $nest: focusIndicator
@@ -118,7 +113,7 @@ const Checkbox = ({
         }}
       >
         <input
-          defaultChecked={checked}
+          checked={checked}
           ref={input}
           onChange={(e) => {
             if (disabled) return
@@ -133,24 +128,28 @@ const Checkbox = ({
             pointerEvents: 'none',
           }}
         />
-        <Box
-          height={iconScale * 100 + '%'}
-          width={iconScale * 100 + '%'}
-          alignItems="center"
-          justifyContent="center"
-          opacity={checked ? 1 : iconUncheckedOpacity}
-        >
-          <Icon
-            name={checked ? checkedIcon : uncheckedIcon}
-            color={iconColor}
-            colorWeight={iconColorWeight}
-            width="100%"
-            height="100%"
-          />
-        </Box>
+        {checked &&
+          (content || (
+            <Box
+              height="120%"
+              width="120%"
+              alignItems="center"
+              justifyContent="center"
+              opacity={1}
+            >
+              <Icon
+                name="Checkmark"
+                color="neutral"
+                colorWeight={0}
+                width="100%"
+                height="100%"
+              />
+            </Box>
+          ))}
+        {!checked && content}
       </Box>
       {text && (
-        <Box marginLeft="medium">
+        <Box marginLeft={8}>
           {typeof text === 'string' ? (
             <CustomText lineHeight={1.2} text={text} />
           ) : (
@@ -158,7 +157,7 @@ const Checkbox = ({
           )}
         </Box>
       )}
-      {children && <Box marginLeft="medium">{children}</Box>}
+      {children && <Box marginLeft={8}>{children}</Box>}
     </Box>
   )
 }

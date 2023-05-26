@@ -2,7 +2,7 @@ import * as Rm from '@rainmaker/ui'
 import * as React from 'react'
 import { Page } from '../Page'
 import { useRedirect } from '../router'
-import { Icon, IconButton, Row, SearchInput, TextInput } from '../ui'
+import { IconButton, SearchInput } from '../ui'
 
 type User = {
   id: string

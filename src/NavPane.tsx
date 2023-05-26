@@ -1,8 +1,7 @@
-import { LabeledRouteObject, getRoutes, useRedirect } from './router'
+import { LabeledRouteObject, getRoutes } from './router'
 import { Button } from './ui'
 
 const RouteList = ({ routes }: { routes: LabeledRouteObject[] }) => {
-  const redirect = useRedirect()
 
   return (
     <div
@@ -34,7 +33,7 @@ const RouteList = ({ routes }: { routes: LabeledRouteObject[] }) => {
               appearance="outline"
               rounded={true}
               color="neutral"
-              onClick={() => redirect(route.path.split('/v2')[1])}
+              href={route.path}
             />
             {route.children && (
               <div

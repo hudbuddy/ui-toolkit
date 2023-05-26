@@ -10,14 +10,12 @@ import {
   Button,
   CancelButton,
   Heading2,
-  Heading3,
   IconButton,
   Label,
   TextInput,
   TextItem,
 } from '../ui'
-import { Box, Column, Row } from '../ui/Layout'
-import { PlatformBubbleList } from '../ui/icons/PlatformBubble'
+import { Box, BrandBubble, BrandBubbleList, Column, Row } from '../ui/'
 import { copyToClipboard } from '../utils/helpers'
 
 /**
@@ -42,7 +40,7 @@ export type Broadcast = {
   aborted: boolean
   activeSceneAssets?: any[]
   canceled: boolean
-  destinations?: any[]
+  destinations?: Platform[]
   engineInfo?: any
   failed: boolean
   followers?: number
@@ -215,14 +213,19 @@ const BroadcastDetails: React.FC<{ broadcast: Broadcast }> = ({
 const BroadcastRow = ({ item }: { item: Broadcast; odd: boolean }) => {
   const { setSidebar } = useSidebar()
 
+  const localTime = moment
+    .utc(item.rawStartDate)
+    .local()
+    .format('MMM D YYYY h:mm A')
+  const utcTime =
+    moment.utc(item.rawStartDate).format('MMM D YYYY h:mm A') + ' UTC'
+
   const viewDetails = React.useMemo(() => {
     return () => {
       setSidebar({
         header: (
           <Row alignItems="center">
-            <PlatformBubbleList
-              platforms={platformsFromIconClass(item.iconClass)}
-            />
+            <BrandBubbleList names={item.destinations} />
             <Column style={{ marginLeft: 10 }}>
               <TextItem fontSize={22} text={item.user} />
               <TextItem fontSize={14} opacity={0.7} text={item.title} />
@@ -253,10 +256,19 @@ const BroadcastRow = ({ item }: { item: Broadcast; odd: boolean }) => {
     <>
       <Rm.TableRowItem>
         <Row gap={12}>
-          <PlatformBubbleList
-            size={28}
-            platforms={platformsFromIconClass(item.iconClass)}
-          />
+          <Box position="relative">
+            <BrandBubbleList size={30} names={item.destinations} />
+            {/* TODO: Only if projectType === 'mixer' */}
+            <Box
+              position="absolute"
+              style={{
+                right: -3,
+                top: -3,
+              }}
+            >
+              <BrandBubble name="xbox" size={14} />
+            </Box>
+          </Box>
           {item.title ? (
             <Body
               ellipsis={true}
@@ -279,16 +291,14 @@ const BroadcastRow = ({ item }: { item: Broadcast; odd: boolean }) => {
         <Row alignItems="center">
           <Rm.Tooltip
             position="top"
-            message={`Started at: ${new Date(item.startDate).toUTCString()}`}
+            message={`Started at: ${utcTime}`}
             variant="detailed"
           >
             <IconButton
               icon="faCalendarAlt"
-              onClick={() =>
-                copyToClipboard(new Date(item.startDate).toUTCString())
-              }
+              onClick={() => copyToClipboard(utcTime)}
             />
-            {moment(item.startDate).format('MMMM D, YYYY')}
+            {localTime}
           </Rm.Tooltip>
         </Row>
       </Rm.TableRowItem>
@@ -363,36 +373,4 @@ export const BroadcastsTable = (props: {
       rowComponent={BroadcastRow}
     />
   )
-}
-
-// For reasons unknown at this point, broadcasts contain
-//  platform information only in the form of 'iconClass'
-const platformsFromIconClass = (classList: string) => {
-  const classes = classList.split(' ')
-  const re = /platform-icon-(\w+)\b/g
-  const ds: string[] = []
-  classes.forEach((c) => {
-    if (re.test(c)) {
-      ds.push(RegExp.$1)
-    }
-  })
-  return ds
-    .map((d) => d.toLowerCase())
-    .map((d) => {
-      switch (d) {
-        case 'twitchtv':
-        case 'twitch':
-        case 'twitchtv-inactive':
-        case 'twitch-inactive':
-          return Platform.Twitch
-        case 'facebook':
-        case 'facebook-inactive':
-          return Platform.Facebook
-        case 'youtube':
-        case 'youtube-inactive':
-          return Platform.YouTube
-        default:
-          return Platform.CustomRTMP
-      }
-    })
 }

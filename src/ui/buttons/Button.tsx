@@ -104,7 +104,7 @@ export const Button = ({
   text,
   onClick,
   submit = false,
-  fontWeight = 900,
+  fontWeight = 700,
   colorWeight = 500,
   disabled = false,
   loading = false,
@@ -223,7 +223,7 @@ export const Button = ({
         type: 'submit',
       })}
       style={{
-        width,
+        width: href ? '100%' : width,
         fontSize,
         height,
         minWidth: width || minWidth || 'max-content',
@@ -304,8 +304,8 @@ export const Button = ({
         position: 'relative',
         textDecoration: 'none',
         width,
+        minWidth: width || minWidth || 'max-content',
       }}
-      target="_blank"
       href={href}
     >
       {node}

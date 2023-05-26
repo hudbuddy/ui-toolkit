@@ -11,7 +11,7 @@ import {
   Heading2,
   Heading3,
   Label,
-  PlatformBubble,
+  BrandBubble,
   Row,
   TextItem
 } from '../../../ui'
@@ -192,7 +192,7 @@ const HistogramPanel = () => {
   )
 }
 
-const DestinationCount = (props: { type: string }) => {
+const DestinationCount = (props: { type: Platform }) => {
   const { broadcasts } = React.useContext(BroadcastsContext)
   const total = React.useMemo(
     () => broadcasts.filter((d) => d.platform === props.type).length,
@@ -200,7 +200,7 @@ const DestinationCount = (props: { type: string }) => {
   )
   return (
     <Column gap={8} style={{ alignItems: 'center' }}>
-      <PlatformBubble type={props.type} />
+      <BrandBubble name={props.type} />
       <TextItem text={total} />
     </Column>
   )

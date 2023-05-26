@@ -7,12 +7,16 @@
  *   - Resolves to JSON
  */
 
+import { useState, useEffect } from 'react'
+
+export type APIRequestOptions = Omit<RequestInit, 'body'> & {
+  body?: { [key: string]: any } | RequestInit['body']
+  headers?: { [name: string]: string }
+}
+
 export const fetchAPI = (
   path: string,
-  requestOptions: Omit<RequestInit, 'body'> & {
-    body?: { [key: string]: any } | RequestInit['body']
-    headers?: { [name: string]: string }
-  } = {},
+  requestOptions: APIRequestOptions = {},
 ) => {
   const body =
     typeof requestOptions.body === 'string'
@@ -31,4 +35,18 @@ export const fetchAPI = (
     if (!resp.ok) throw Error('Request failed')
     return resp ? resp.json() : null
   })
+}
+
+export const useAPI = <T extends {} = {}>(
+  url: string,
+  deps: any[] = [],
+  requestOptions?: APIRequestOptions,
+): T => {
+  const [result, setResult] = useState()
+
+  useEffect(() => {
+    fetchAPI(url, requestOptions).then(setResult)
+  }, deps)
+
+  return result
 }

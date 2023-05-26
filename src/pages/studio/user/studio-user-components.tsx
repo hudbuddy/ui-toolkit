@@ -152,7 +152,7 @@ export const ListButton = wrapBox(
         onClick={onClick}
       >
         {children}
-        <FaIcon width={20} name="faChevronRight" />
+        <FaIcon size={20} name="faChevronRight" />
       </Row>
     )
   },

@@ -4,7 +4,6 @@ import { classes, style } from 'typestyle'
 import { Page } from '../../Page'
 import { Color, CustomSelect, Label, TextItem } from '../../ui'
 import { Box, Column, Row } from '../../ui/Layout'
-import { Icon } from '../../ui/icons/Icon'
 import { bar } from '../../utils/chart'
 import { npsGroupsBreakdown, ratingGroupsBreakdown } from './criterion-charts'
 import {
@@ -18,7 +17,7 @@ import { CriterionReviews } from './criterion-reviews'
 export const CriterionPage = () => {
   return (
     <CriterionProvider>
-      <Page title="Criterion">
+      <Page title="Criterion" showTitle={true}>
         <Body />
       </Page>
     </CriterionProvider>
@@ -53,7 +52,7 @@ const Body = () => {
         </Box>
       </Row>
       {/* Overview */}
-      <Section style={{ gap: 40, flexWrap: 'wrap' }}>
+      <Section style={{ gap: 40, flexWrap: 'wrap', justifyContent: 'space-between' }}>
         <StatsBlock
           label="Net Promoter Score"
           fontSize={50}
@@ -194,7 +193,7 @@ const GroupsBreakdown = () => {
   )
 
   return (
-    <Box height={300} width="100%">
+    <Box height={230} width="100%">
       <Bar options={{ ...bar.options, ...chart.options }} data={chart.data} />
     </Box>
   )
@@ -209,7 +208,7 @@ const RatingsBreakdown = () => {
   )
 
   return (
-    <Box height={300} width="100%">
+    <Box height={230} width="100%">
       <Bar options={{ ...bar.options, ...chart.options }} data={chart.data} />
     </Box>
   )

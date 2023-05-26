@@ -13,14 +13,14 @@ const ELLIPSIS_RULES: React.CSSProperties = {
 const styles = (
   props: Partial<TextProps> | TextBuilderProps,
 ): React.CSSProperties => {
-  const {
+  let {
     selectable = true,
     cursor,
     paragraph,
     fontSize,
     fontWeight,
     color,
-    colorWeight,
+    colorWeight = 0,
     textTransform,
     textAlign,
     letterSpacing,
@@ -32,8 +32,14 @@ const styles = (
     ellipsis,
     marginLeft,
     marginTop,
+    muted,
     selectOnClick,
   } = props
+
+  if (muted) {
+    color = color ?? 'neutral'
+    colorWeight = colorWeight + 400
+  }
 
   return {
     width,
@@ -41,7 +47,7 @@ const styles = (
     ...(paragraph ? { lineHeight: 1.4 } : {}),
     fontSize,
     fontWeight: bold ? '700' : fontWeight,
-    color: color ? Color[color](colorWeight ?? 0) : null,
+    color: color ? Color[color](colorWeight) : null,
     cursor,
     opacity,
     marginLeft,
@@ -90,6 +96,7 @@ export type TextProps = {
   iconColorWeight?: number
   iconScale?: number
   iconMargin?: string | number
+  muted?: boolean
   selectOnClick?: boolean
   href?: string
   cursor?: 'pointer' | 'default'
@@ -229,41 +236,18 @@ export const CustomText = (props: TextProps) => {
 }
 
 export const Heading1 = (props: TextProps) => {
-  return (
-    <CustomText
-      fontSize={24}
-      lineHeight={1}
-      italic={true}
-      fontWeight={900}
-      letterSpacing={'-0.01em'}
-      {...props}
-    />
-  )
+  return <CustomText fontSize={24} italic={false} fontWeight={900} {...props} />
 }
 
 export const Heading2 = (props: TextProps) => {
   return (
-    <CustomText
-      fontSize={20}
-      italic={true}
-      lineHeight={1.1}
-      fontWeight={900}
-      letterSpacing={'-0.01em'}
-      {...props}
-    />
+    <CustomText fontSize={20} lineHeight={1.1} fontWeight={700} {...props} />
   )
 }
 
 export const Heading3 = (props: TextProps) => {
   return (
-    <CustomText
-      fontSize={16}
-      italic={true}
-      lineHeight={1.2}
-      fontWeight={700}
-      letterSpacing={'-0.01em'}
-      {...props}
-    />
+    <CustomText fontSize={16} lineHeight={1.2} fontWeight={700} {...props} />
   )
 }
 

@@ -1,21 +1,32 @@
 import * as RM from '@rainmaker/ui'
-import { useState } from 'react'
-import { Box, Column } from '../../ui/Layout'
+import moment from 'moment'
+import { useRef, useState } from 'react'
+import { useSidebar } from '../../SideBar'
+import {
+  Body,
+  Checkbox,
+  Color,
+  Heading2,
+  IconButton,
+  Label,
+  TextItem,
+} from '../../ui'
+import { Box, Column, Row } from '../../ui/Layout'
+import { useAPI } from '../../utils/fetch-api'
+import { copyToClipboard } from '../../utils/helpers'
+import { User } from '../studio/studio-types'
 import { useCriterion } from './criterion-context'
 import { Review } from './criterion-data'
-import { PlatformBubble } from '../../ui/icons/PlatformBubble'
-import { FaIcon } from '../../ui/icons/Icon'
-import { copyToClipboard } from '../../utils/helpers'
-import { IconButton } from '../../ui'
 
 export const CriterionReviews = () => {
   const ctx = useCriterion()
   const [page, setPage] = useState(0)
   const [limit, setLimit] = useState(10)
-  const reviews = ctx.data.reviews
+  const reviews = ctx.filteredReviews
 
   return (
     <Column width="100%" alignItems="stretch">
+      <Filters />
       <RM.PaginatedTable
         fetching={false}
         limit={limit}
@@ -34,7 +45,73 @@ export const CriterionReviews = () => {
 }
 
 const ReviewItem = ({ item }: { item: Review }) => {
-  const url = `/studio/users/${item.userId}`
+  const { setSidebar } = useSidebar()
+  const userUrl = `/studio/users/${item.userId}`
+  const localTime = moment
+    .utc(item.timestamp)
+    .local()
+    .format('MMM D YYYY h:mm A')
+  const utcTime =
+    moment.utc(item.timestamp).format('MMM D YYYY h:mm A') + ' UTC'
+
+  const DetailsBody = useRef(() => {
+    const user = useAPI<User>('/api/users/' + item.userId, [])
+    const dateDiff = user
+      ? moment(item.timestamp).diff(moment(user.createdAt), 'days')
+      : null
+
+    return (
+      <Column>
+        <Row gap={8} height={40}>
+          <Label text="Rating" width={120} />
+          <TextItem text={item.rating} fontSize={18} marginLeft={6} />
+        </Row>
+        <Row gap={8} height={40}>
+          <Label text="User" width={120} />
+          <Box link={userUrl} tooltip="View user page">
+            <IconButton size={30} icon="faUserCircle" />
+          </Box>
+          <TextItem text={item.userId} selectOnClick={true} />
+        </Row>
+        <Row gap={8} height={40}>
+          <Label text="Review Date" width={120} />
+          <Box tooltip="Copy review date">
+            <IconButton
+              size={30}
+              icon="faCalendarAlt"
+              onClick={() => copyToClipboard(utcTime)}
+            />
+          </Box>
+          <Box tooltip={utcTime}>{localTime}</Box>
+        </Row>
+        <Row gap={8} height={40}>
+          <Label text="Account Age" width={120} />
+          <Box tooltip="Age at time of review">
+            {dateDiff ? dateDiff + ' days' : 'Loading...'}
+          </Box>
+          {/* TODO: */}
+        </Row>
+        <Row gap={8} height={40}>
+          <Label text="Comment" width={120} />
+          {item.comment && <Body text={item.comment} />}
+          {!item.comment && (
+            <Body text="No comment" italic={true} opacity={0.3} />
+          )}
+        </Row>
+      </Column>
+    )
+  })
+
+  const viewDetails = () => {
+    setSidebar({
+      header: (
+        <Row alignItems="center">
+          <Heading2 text="User Review" />
+        </Row>
+      ),
+      body: <DetailsBody.current />,
+    })
+  }
 
   return (
     <>
@@ -48,24 +125,33 @@ const ReviewItem = ({ item }: { item: Review }) => {
           <Box style={{ fontStyle: 'italic', opacity: 0.5 }}>No comment</Box>
         )}
       </RM.TableRowItem>
-      <RM.TableRowItem width="15%">
-        <Box justifyContent="center" width="100%">
-          {item.formattedTimestamp}
-        </Box>
+      <RM.TableRowItem width="25%">
+        <Row alignItems="center" tooltip={`Reviewed at: ${utcTime}`}>
+          <IconButton
+            icon="faCalendarAlt"
+            onClick={() => copyToClipboard(utcTime)}
+          />
+          {localTime}
+        </Row>
       </RM.TableRowItem>
       <RM.TableRowItem width={100}>
         <Box opacity={0.6} fontSize={10} style={{ textTransform: 'uppercase' }}>
           {item.product}
         </Box>
       </RM.TableRowItem>
+      <RM.TableRowItem width={50}>
+        <RM.Tooltip position="top" message="View details" variant="detailed">
+          <IconButton icon="faInfo" onClick={viewDetails} />
+        </RM.Tooltip>
+      </RM.TableRowItem>
       <RM.TableRowItem width={30}>
-        <Box link={url} cursor="pointer" tooltip="View user page">
+        <Box link={userUrl} cursor="pointer" tooltip="View user page">
           <IconButton size={30} icon="faUserCircle" />
         </Box>
       </RM.TableRowItem>
       {/* <RM.TableRowItem>
         <Box justifyContent="flex-end" width="100%">
-          <PlatformBubble type={item.platform} />
+          <BrandBubble name={item.platfoRM} />
         </Box>
       </RM.TableRowItem> */}
       {/* <RM.TableRowItem>
@@ -76,6 +162,115 @@ const ReviewItem = ({ item }: { item: Review }) => {
         </Box>
       </RM.TableRowItem> */}
     </>
+  )
+}
+
+const Filters = () => {
+  const { filters, setFilters, data, filteredReviews, isAnyFilterSet } =
+    useCriterion()
+  const RATINGS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+  return (
+    <Column>
+      <Row
+        width="100%"
+        marginBottom={10}
+        gap={8}
+        alignItems="flex-end"
+        justifyContent="space-between"
+      >
+        <Column gap={8}>
+          <Label text="Filter by rating" />
+          <Row gap={4}>
+            {RATINGS.map((x) => (
+              <RatingFilter rating={x} key={x} />
+            ))}
+            {filters.ratings.length !== 10 && (
+              <Box tooltip="Reset">
+                <IconButton
+                  marginLeft={4}
+                  icon="faUndo"
+                  size={16}
+                  onClick={() => {
+                    setFilters({
+                      ...filters,
+                      ratings: RATINGS,
+                    })
+                  }}
+                />
+              </Box>
+            )}
+          </Row>
+        </Column>
+        <Checkbox
+          checked={filters.commentsOnly}
+          text="Show comments only"
+          onChange={(checked) =>
+            setFilters({ ...filters, commentsOnly: checked })
+          }
+        />
+      </Row>
+      {isAnyFilterSet && (
+        <Row gap={6} marginBottom={6}>
+          <Body
+            text={`Displaying ${filteredReviews.length} of ${data.reviews.length} reviews`}
+          />
+          <Body
+            muted={true}
+            italic={true}
+            text={`(${
+              data.reviews.length - filteredReviews.length
+            } hidden by filter)`}
+          />
+        </Row>
+      )}
+    </Column>
+  )
+}
+
+const RatingFilter = ({ rating }: { rating: number }) => {
+  const { filters, setFilters } = useCriterion()
+  const filteredRatings = new Set(filters.ratings)
+  const checked = filteredRatings.has(rating)
+
+  return (
+    <Checkbox
+      checked={checked}
+      appearance="icon"
+      onChange={(checked) => {
+        if (checked) {
+          filteredRatings.add(rating)
+        } else {
+          filteredRatings.delete(rating)
+        }
+        setFilters({
+          ...filters,
+          ratings: Array.from(filteredRatings),
+        })
+      }}
+      content={
+        <Box
+          alignItems="center"
+          justifyContent="center"
+          width={22}
+          height={22}
+          opacity={checked ? 1 : 0.3}
+          style={{
+            background: Color.neutral(700),
+          }}
+          hover={{
+            background: Color.neutral(600),
+          }}
+        >
+          <TextItem
+            text={rating}
+            fontSize={12}
+            color="neutral"
+            colorWeight={0}
+          />
+        </Box>
+      }
+    />
   )
 }
 

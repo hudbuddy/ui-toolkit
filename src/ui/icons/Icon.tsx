@@ -35,7 +35,7 @@ type Props = {
   height?: number | string
 
   // Shorthand for width/height
-  size?: string
+  size?: number | string
 
   marginLeft?: number
   marginTop?: number
@@ -68,10 +68,10 @@ const SVGWrapper = ({
         ...nudge(props),
         display: 'flex',
         justifyContent: 'center',
-        flexBasis: width || 'auto',
+        flexBasis: width || size || 'auto',
         flexShrink: 0,
         width: width || size || '1em',
-        height: height || size || (width ? 'fit-content' : '1em'),
+        height: height || (width || size ? 'fit-content' : '1em'),
         fill: 'currentColor',
         color: colorStyle,
         marginLeft,
@@ -83,20 +83,16 @@ const SVGWrapper = ({
   )
 }
 
-const defaultStyles = {
-  alignItems: 'center',
-  justifyContent: 'center',
-}
-
 // {type} property applies only to FontAwesome icons
 type IconProps = Props & { name: IconName; type?: FaIconType }
-const Icon = wrapBox(({ name, ...props }: IconProps) => {
+const Icon = ({ name, ...props }: IconProps) => {
+  if (!name) return null
   if (customIcons.includes(name)) {
     return <SVGWrapper {...props}>{IconMap[name]}</SVGWrapper>
   } else {
     return <FaIcon {...{ name: name as FaIconName, ...props }} />
   }
-}, defaultStyles)
+}
 
 const faIcons = {
   light: FaIconLight,
@@ -110,7 +106,7 @@ type FaIconProps = Props & {
   name: FaIconName
   type?: keyof typeof faIcons
 }
-const FaIcon = wrapBox(({ name, type = 'regular', ...props }: FaIconProps) => {
+const FaIcon = ({ name, type = 'regular', ...props }: FaIconProps) => {
   return (
     <SVGWrapper {...props}>
       <FontAwesomeIcon
@@ -123,11 +119,11 @@ const FaIcon = wrapBox(({ name, type = 'regular', ...props }: FaIconProps) => {
       />
     </SVGWrapper>
   )
-}, defaultStyles)
+}
 
 type SVGProps = Props & { svg: JSX.Element }
-const SVG = wrapBox(({ svg, ...props }: SVGProps) => {
+const SVG = ({ svg, ...props }: SVGProps) => {
   return <SVGWrapper {...props}>{svg}</SVGWrapper>
-}, defaultStyles)
+}
 
 export { Icon, FaIcon, SVG }
