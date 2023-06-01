@@ -16,8 +16,6 @@
     "jsx": "react-jsx",
 
     /* Linting */
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
     "typeRoots": ["./node_modules/@types"],

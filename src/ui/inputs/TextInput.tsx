@@ -386,13 +386,9 @@ export const SearchInput = (props: TextInputProps) => {
       appearance="text"
       placeholder="Search..."
       prefixComponent={
-        <Icon
-          fontSize={24}
-          name="faSearch"
-          color="neutral"
-          colorWeight={300}
-          marginRight={2}
-        />
+        <Box marginRight={2}>
+          <Icon size={24} name="faSearch" color="neutral" colorWeight={300} />
+        </Box>
       }
       {...props}
     />

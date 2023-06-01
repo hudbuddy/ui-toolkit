@@ -1,4 +1,4 @@
-import { cssRaw, keyframes, style, types } from 'typestyle'
+import { cssRaw, keyframes, style } from 'typestyle'
 
 export const Placement = {
   topleft: 'topLeft',

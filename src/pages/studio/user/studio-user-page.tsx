@@ -4,6 +4,8 @@ import { Bar } from 'react-chartjs-2'
 import { useParams } from 'react-router-dom'
 import { useAdmin } from '../../../Admin'
 import { Page } from '../../../Page'
+import { useSidebar } from '../../../SideBar'
+import { Heading2 } from '../../../ui'
 import { Box, Column, Row, WrapBox, wrapBox } from '../../../ui/Layout'
 import { Button } from '../../../ui/buttons/Button'
 import { BrandBubbleList } from '../../../ui/icons/BrandBubble'
@@ -26,9 +28,6 @@ import {
   useCurrentStudioUser,
   useStudio,
 } from './studio-user-context'
-import { useSidebar } from '../../../SideBar'
-import { Heading2 } from '../../../ui'
-import { useAPI } from '../../../utils/fetch-api'
 
 const panelBackground = 'rgba(0, 0, 0, 0.15)'
 
@@ -167,7 +166,9 @@ const HeaderRight = wrapBox(() => {
         marginLeft={8}
         disabled={!isLive}
         fields={{
+          // @ts-ignore TODO:
           link: isLive ? liveBroadcast.url : null,
+          // @ts-ignore TODO:
           tooltip: isLive ? liveBroadcast.url : 'Offline',
         }}
       />
@@ -277,7 +278,7 @@ const NPS = () => {
 
   // TODO: Iterate attempts - if reviewed=true, populate with review data
 
-  const viewDetails = useCallback(() => {
+  const viewResponses = useCallback(() => {
     setSidebar({
       header: (
         <Row alignItems="center">

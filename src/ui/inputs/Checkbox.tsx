@@ -126,6 +126,7 @@ const Checkbox = ({
             opacity: 0,
             width: 0,
             pointerEvents: 'none',
+            position: 'absolute',
           }}
         />
         {checked &&
