@@ -1,8 +1,9 @@
-import {
+import React, {
   ReactNode,
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState,
 } from 'react'
 import { fetchAPI } from '../../../utils/fetch-api'
@@ -10,6 +11,10 @@ import type * as Studio from '../studio-types'
 import moment from 'moment'
 import { UserBroadcastChartData } from './studio-user-charts'
 import { Attempt, Review } from '../../criterion/criterion-data'
+import {
+  BroadcastsProvider,
+  useBroadcasts,
+} from '../broadcasts/broadcasts-page'
 
 /**
  * TODO: Extend this generically as "useStudio" if it makes sense
@@ -23,15 +28,21 @@ const StudioUserContext = createContext<StudioUserState>({} as StudioUserState)
 type StudioUserState = {
   users: StudioUserMap
   fetchUser: (id: string) => Promise<CurrentUser>
+  updateCurrentUser: (props: Partial<CurrentUser>) => CurrentUser
   // Matches the ID of the latest call to fetchUser(id)
   currentUserId: string
   isFetchingId: string | null
 }
 
-type CurrentUser = Studio.User & {
+export type CurrentUser = Studio.User & {
   status: UserStatus
   criterion: UserCriterion
   broadcastChartData: { labels: string[]; data: UserBroadcastChartData[] }
+  setRoles: (roles: string[]) => Promise<void>
+  deleteProject: (project: Studio.Project) => Promise<void>
+  deleteScene: (scene: Studio.Scene) => Promise<void>
+  deleteAsset: (asset: Studio.Asset) => Promise<void>
+  deleteAccount: (account: Studio.Account) => Promise<void>
 }
 
 type UserStatus = {
@@ -58,15 +69,16 @@ type UserCriterion = {
   attempts: Attempt[]
 }
 
-export const StudioUserProvider = ({ children }: { children: ReactNode }) => {
+const StudioUserProviderBody = ({ children }: { children: ReactNode }) => {
+  const { broadcasts } = useBroadcasts()
   const [currentUserId, setCurrentUserId] = useState<string>(null)
   const [isFetchingId, setIsFetchingId] = useState<string>(null)
   const [users, setUsers] = useState<StudioUserMap>({})
 
   const fetchUser = useCallback(
     async (id: string) => {
-      setCurrentUserId(id)
       setIsFetchingId(id)
+      setCurrentUserId(id)
       try {
         const user = await getUserWithStatus(id)
         setUsers({
@@ -84,17 +96,68 @@ export const StudioUserProvider = ({ children }: { children: ReactNode }) => {
     [users],
   )
 
+  const updateCurrentUser = useCallback(
+    (props: Partial<CurrentUser>) => {
+      if (!users[currentUserId]) return
+      const user = {
+        ...users[currentUserId],
+        ...props,
+      }
+      setUsers({
+        ...users,
+        [currentUserId]: user,
+      })
+      return user
+    },
+    [users, currentUserId],
+  )
+
+  useEffect(() => {
+    // Update current user once broadcast data is available
+    const user = users[currentUserId]
+    if (!user) return
+
+    const liveBroadcast = broadcasts.find((x) => x.userId === currentUserId)
+    const isLive = Boolean(liveBroadcast)
+    const gameSourceUrl =
+      liveBroadcast?.projectType === 'mixer'
+        ? `https://studio.golightstream.com/webpack/webrtc.html?peerId=game-source&roomId=${liveBroadcast.projectId}`
+        : null
+
+    updateCurrentUser({
+      status: {
+        ...user.status,
+        liveBroadcast,
+        isLive,
+        gameSourceUrl,
+      },
+    })
+  }, [users[currentUserId]?.id, currentUserId, broadcasts.length])
+
   return (
     <StudioUserContext.Provider
       value={{
         users,
         fetchUser,
+        updateCurrentUser,
         currentUserId,
         isFetchingId,
       }}
     >
       {children}
     </StudioUserContext.Provider>
+  )
+}
+
+export const StudioUserProvider = ({
+  children,
+}: {
+  children: React.ReactNode
+}) => {
+  return (
+    <BroadcastsProvider>
+      <StudioUserProviderBody>{children}</StudioUserProviderBody>
+    </BroadcastsProvider>
   )
 }
 
@@ -113,56 +176,14 @@ const fetchUser = (id: string): Promise<Studio.User> => {
 }
 
 const fetchReviews = (id: string) => {
-  // return fetchAPI(`/api/criterion/reviews?userId=${id}`)
-  return [
-    {
-      id: '24382',
-      userId: '64160a6d68cc572f43a33a23',
-      rating: 10,
-      comment: '',
-      platform: 'magic',
-      product: 'studio',
-      timestamp: '2023-04-19T09:01:17.227Z',
-      formattedTimestamp: 'Apr 19 2023',
-      deleted: false,
-    },
-  ]
+  return fetchAPI(`/api/criterion/reviews?userId=${id}`, {}, [])
 }
 
 const fetchAttempts = (id: string) => {
-  // return fetchAPI(`/api/criterion/attempts?userId=${id}`)
-  return [
-    {
-      id: '335309',
-      user_id: '64160a6d68cc572f43a33a23',
-      reviewed: false,
-      timestamp: '2023-03-27T20:13:53.000Z',
-      product: 'studio',
-      platform: 'twitchtv',
-      formattedTimestamp: 'Mar 27 2023',
-    },
-    {
-      id: '338136',
-      user_id: '64160a6d68cc572f43a33a23',
-      reviewed: true,
-      timestamp: '2023-04-19T09:01:17.282Z',
-      product: 'studio',
-      platform: 'magic',
-      formattedTimestamp: 'Apr 19 2023',
-    },
-    {
-      id: '338137',
-      user_id: '64160a6d68cc572f43a33a23',
-      reviewed: true,
-      timestamp: '2023-04-19T09:01:19.522Z',
-      product: 'studio',
-      platform: 'magic',
-      formattedTimestamp: 'Apr 19 2023',
-    },
-  ]
+  return fetchAPI(`/api/criterion/attempts?userId=${id}`, {}, [])
 }
 
-const getUserWithStatus = async (id: string) => {
+export const getUserWithStatus = async (id: string) => {
   const user = await fetchUser(id)
   const [criterionReviews, criterionAttempts, broadcastStats] =
     await Promise.all([
@@ -186,30 +207,15 @@ const getUserWithStatus = async (id: string) => {
     attempts: criterionAttempts,
   } as UserCriterion
 
-  // TODO: Get live broadcast
-  //  broadcasts.live.find(x => user.id === x.userId)
-  const liveBroadcast = null
-  const isLive = Boolean(liveBroadcast)
-
-  // TODO: Get flagged
-  //  Boolean(broadcasts.flagged.filter(x => user.id === x.userId))
-  const flaggedBroadcastCount = 0
-
-  const gameSourceUrl =
-    liveBroadcast?.projectType === 'mixer'
-      ? `https://studio.golightstream.com/webpack/webrtc.html?peerId=game-source&roomId=${liveBroadcast.projectId}`
-      : null
-
   const status = {
     timeBroadcastedHours: 0,
     broadcastsTotal: 0,
     longestBroadcast: 0,
     totalFailedBroadcasts: 0,
     totalAbortedBroadcasts: 0,
-    flaggedBroadcastCount,
-    isLive,
-    liveBroadcast,
-    gameSourceUrl,
+    isLive: false,
+    liveBroadcast: null,
+    gameSourceUrl: null,
   } as UserStatus
 
   const broadcastChartData = {
@@ -259,6 +265,7 @@ const getUserWithStatus = async (id: string) => {
 
   return {
     ...user,
+    roles: user.roles.filter((role) => role !== ''),
     criterion,
     broadcastChartData,
     status,
@@ -267,7 +274,123 @@ const getUserWithStatus = async (id: string) => {
 
 export const useStudio = () => useContext(StudioUserContext)
 
-export const useCurrentStudioUser = () => {
-  const { users, currentUserId } = useContext(StudioUserContext)
+export const useStudioUser = (id: string) => {
+  const { fetchUser, currentUserId, users } = useStudio()
+
+  useEffect(() => {
+    fetchUser(id)
+  }, [id])
+
   return users[currentUserId]
+}
+
+export const useCurrentStudioUser = () => {
+  const { users, currentUserId, updateCurrentUser } =
+    useContext(StudioUserContext)
+  const user = users[currentUserId]
+
+  const setRoles = useCallback(
+    (roles: string[]) => {
+      updateCurrentUser({ roles })
+      return fetchAPI(`/api/users/${user.id}/roles`, {
+        method: 'POST',
+        body: {
+          roles,
+        },
+      })
+    },
+    [user?.id, updateCurrentUser],
+  )
+
+  const deleteAccount = useCallback(
+    async (account: Studio.Account) => {
+      updateCurrentUser({
+        accounts: user.accounts.filter((x) => x.id !== account.id),
+      })
+      await fetchAPI(`/api/accounts/${account.id}`, {
+        method: 'DELETE',
+        body: {
+          providerId: account.providerId,
+        },
+      })
+    },
+    [user?.id, updateCurrentUser],
+  )
+
+  const deleteProject = useCallback(
+    async (project: Studio.Project) => {
+      updateCurrentUser({
+        projects: user.projects.filter((x) => x.id !== project.id),
+      })
+      await fetchAPI(`/api/projects/${project.id}`, {
+        method: 'DELETE',
+        body: {
+          owner: project.owner,
+        },
+      })
+    },
+    [user?.id, updateCurrentUser],
+  )
+
+  const deleteScene = useCallback(
+    async (scene: Studio.Scene) => {
+      const projects = user.projects.map((project) => {
+        return project.id === scene.owner
+          ? {
+              ...project,
+              scenes: project.scenes.filter((x) => x.id !== scene.id),
+            }
+          : project
+      })
+      updateCurrentUser({
+        projects,
+      })
+      await fetchAPI(`/api/scenes/${scene.id}`, {
+        method: 'DELETE',
+        body: {
+          owner: scene.owner,
+        },
+      })
+    },
+    [user?.id, updateCurrentUser],
+  )
+
+  const deleteAsset = useCallback(
+    async (asset: Studio.Asset) => {
+      const projects = user.projects.map((project) => {
+        return {
+          ...project,
+          scenes: project.scenes.map((scene) => {
+            return scene.id === asset.owner
+              ? {
+                  ...scene,
+                  assets: scene.assets.filter((x) => x.id !== asset.id),
+                }
+              : scene
+          }),
+        }
+      })
+      updateCurrentUser({
+        projects,
+      })
+      await fetchAPI(`/api/assets/${asset.id}`, {
+        method: 'DELETE',
+        body: {
+          owner: asset.owner,
+        },
+      })
+    },
+    [user?.id, updateCurrentUser],
+  )
+
+  return user
+    ? {
+        ...user,
+        setRoles,
+        deleteProject,
+        deleteScene,
+        deleteAsset,
+        deleteAccount,
+      }
+    : null
 }

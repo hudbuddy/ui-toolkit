@@ -81,7 +81,6 @@ type ActiveReviewFilters = {
 export const CriterionProvider = ({ children }: { children: ReactNode }) => {
   const [dateRange, setDateRange] = useState<DateRange>(DateRange.PAST_WEEK)
   const [data, setData] = useState<CriterionData>(DATE_RANGES[dateRange]._cache)
-  DATE_RANGES[dateRange]._cache = data
 
   // Filters
   const [filteredReviews, setFilteredReviews] = useState<Review[]>([])
@@ -93,8 +92,13 @@ export const CriterionProvider = ({ children }: { children: ReactNode }) => {
   const isAnyFilterSet = filters.commentsOnly || filters.ratings.length !== 10
 
   useEffect(() => {
-    if (DATE_RANGES[dateRange]._cache) return
-    getCriterionStatistics(DATE_RANGES[dateRange].days).then(setData)
+    if (DATE_RANGES[dateRange]._cache)
+      return setData(DATE_RANGES[dateRange]._cache)
+      
+    getCriterionStatistics(DATE_RANGES[dateRange].days).then((data) => {
+      setData(data)
+      DATE_RANGES[dateRange]._cache = data
+    })
   }, [dateRange])
 
   useEffect(() => {

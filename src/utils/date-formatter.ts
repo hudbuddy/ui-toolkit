@@ -1,3 +1,5 @@
+import moment from 'moment'
+
 export const date2str = (date: string, format: string): string => {
   const d = new Date(date)
   const z = {
@@ -14,4 +16,11 @@ export const date2str = (date: string, format: string): string => {
   return format.replace(/(y+)/g, function (v) {
     return d.getFullYear().toString().slice(-v.length)
   })
+}
+
+// Accepts UTC timestamp
+export const formatTimestamp = (timestamp: string) => {
+  const utcTime = moment.utc(timestamp).format('MMM D YYYY h:mm A') + ' UTC'
+  const localTime = moment.utc(timestamp).local().format('MMM D YYYY h:mm A')
+  return { utcTime, localTime }
 }

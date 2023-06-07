@@ -7,7 +7,7 @@ export type User = {
   deleted: boolean
   roles: string[]
   availableRoles: string[]
-  subscription: Subscription
+  subscription: Subscription | null
   hasAcceptedDataPolicy: boolean
   activeProjectId: string
   accounts: Account[]
@@ -70,9 +70,28 @@ export type Scene = {
   deleted: boolean
   createdAt: string
   updatedAt: string
-  assets: any[]
+  assets: Asset[]
   owner: string
   snapshotUrl: string
+}
+
+export type Asset = {
+  id: string
+  isSilenced: string
+  isMuted: string
+  volume: string
+  name: string
+  createdAt: string
+  updatedAt: string
+  owner: string
+  zIndex: number
+  publishType: string
+  prettyName: string
+  width: number
+  height: number
+  resourceId: any
+  content?: string
+  url?: string
 }
 
 export type Broadcasts = {
@@ -81,6 +100,10 @@ export type Broadcasts = {
 }
 
 export type Broadcast = {
+  activeSceneAssets?: any[]
+  destinations?: Platform[]
+  webrtcUrl?: string
+  weekday?: string
   broadcastId: string
   title: string
   length: string
@@ -102,6 +125,7 @@ export type Broadcast = {
   projectId: string
   service: string
   sessionId: string
+  url?: string
   createDetails: {
     cause?: string
     origin?: string

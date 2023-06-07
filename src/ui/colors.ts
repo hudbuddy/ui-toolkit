@@ -19,9 +19,12 @@ export const rtmp = color('#333333')
 export const beam = mixer
 export const twitchtv = twitch
 
+// Misc
+
 export const transparent = color('rgba(0,0,0,0)')
 export const white = color('#ffffff')
 export const black = color('#000000')
+export const purple = color('#786FD1')
 
 /**
  * Joby theme colors

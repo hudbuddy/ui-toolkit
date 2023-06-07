@@ -1,6 +1,7 @@
 import React from 'react'
 import * as Color from '../colors'
 import { Icon, IconName } from '../icons/Icon'
+import { toHref } from '../href-helper'
 
 const ELLIPSIS_RULES: React.CSSProperties = {
   overflow: 'hidden',
@@ -98,7 +99,9 @@ export type TextProps = {
   iconMargin?: string | number
   muted?: boolean
   selectOnClick?: boolean
+  onClick?: React.MouseEventHandler
   href?: string
+  target?: '_blank'
   cursor?: 'pointer' | 'default'
   iconColor?: Color.Type
   // Avoid style overrides
@@ -153,8 +156,8 @@ export const TextBuilder = (props: TextBuilderProps) => (
                     textDecoration: 'none',
                     display: 'inline',
                   }}
-                  target="_blank"
-                  href={modifiers.href}
+                  target={modifiers.target}
+                  href={toHref(modifiers.href)}
                 >
                   {text as string}
                 </a>
@@ -222,9 +225,10 @@ export const CustomText = (props: TextProps) => {
   return (
     <Tag
       style={{ ...styles(props), textDecoration: 'none', ...props.style }}
+      onClick={props.onClick}
       {...(props.href && {
-        target: '_blank',
-        href: props.href,
+        target: props.target,
+        href: toHref(props.href),
       })}
     >
       {props.icon && (

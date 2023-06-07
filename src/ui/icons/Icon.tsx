@@ -58,7 +58,8 @@ const SVGWrapper = ({
   ...props
 }: Props & { children: JSX.Element }) => {
   let colorStyle = 'inherit'
-  if (color) {
+  if (color || typeof colorWeight === 'number') {
+    if (!color) color = 'neutral'
     colorStyle = Color[color](colorWeight)
   }
 

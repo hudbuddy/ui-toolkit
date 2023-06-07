@@ -63,7 +63,8 @@ const PageWrapper = ({ page }: { page: JSX.Element }) => {
       style={{
         width: '100%',
         height: '100%',
-        padding: 32,
+        paddingTop: 32,
+        paddingLeft: 32,
       }}
     >
       <ErrorBoundary>{page}</ErrorBoundary>

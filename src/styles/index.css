@@ -1,4 +1,5 @@
 @import './reset.css';
+@import './animations.css';
 
 * {
   box-sizing: border-box;

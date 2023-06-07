@@ -13,7 +13,6 @@ h5,
 h6,
 p,
 blockquote,
-pre,
 a,
 abbr,
 acronym,
@@ -86,6 +85,8 @@ video {
   font-size: 100%;
   font: inherit;
   vertical-align: baseline;
+  color: inherit;
+  text-decoration: inherit;
 }
 /* HTML5 display-role reset for older browsers */
 article,

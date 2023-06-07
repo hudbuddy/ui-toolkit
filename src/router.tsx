@@ -3,7 +3,7 @@ import {
   useNavigate,
   redirect as _redirect,
 } from 'react-router-dom'
-import { VipPage } from './pages/vip'
+import { VipPage } from './pages/admin/vip-page'
 import { BroadcastsPage } from './pages/studio/broadcasts/broadcasts-page'
 import { JobyUserPage } from './pages/joby/user/joby-user-page'
 import { StudioUserPage } from './pages/studio/user/studio-user-page'
@@ -57,6 +57,13 @@ const routes: RouteObject[] = [
         path: '/v2/studio/users/:id',
         label: 'User',
         element: () => <StudioUserPage />,
+        children: [
+          {
+            path: '/v2/studio/users/:id/projects/:projectId',
+            label: 'User',
+            element: () => <StudioUserPage />,
+          },
+        ],
       },
     ],
   },

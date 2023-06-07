@@ -13,6 +13,7 @@ import {
   useCriterion,
 } from './criterion-context'
 import { CriterionReviews } from './criterion-reviews'
+import { DetailTab } from '../../components/DetailTab'
 
 export const CriterionPage = () => {
   return (
@@ -52,7 +53,9 @@ const Body = () => {
         </Box>
       </Row>
       {/* Overview */}
-      <Section style={{ gap: 40, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      <Section
+        style={{ gap: 40, flexWrap: 'wrap', justifyContent: 'space-between' }}
+      >
         <StatsBlock
           label="Net Promoter Score"
           fontSize={50}
@@ -107,44 +110,6 @@ const DetailViews = {
   [DetailView.Triggers]: () => <div>2</div>,
 }
 
-const tabStyle = style({
-  cursor: 'pointer',
-  padding: '10px 30px',
-  borderRadius: '15px',
-  $nest: {
-    '&:hover': {
-      backgroundColor: 'rgba(0,0,0,10%)',
-    },
-    '&.active': {
-      backgroundColor: 'rgba(255,255,255,5%)',
-    },
-  },
-})
-
-const DetailTab = (props: {
-  label: string
-  count: number
-  activeView: DetailView
-  view: DetailView
-  onClick: () => void
-}) => (
-  <Column
-    className={classes(props.view === props.activeView && 'active', tabStyle)}
-    alignItems="center"
-    onClick={props.onClick}
-  >
-    <Box fontSize={24}>{props.count}</Box>
-    <Box
-      style={{
-        textTransform: 'uppercase',
-        fontSize: 12,
-      }}
-    >
-      {props.label}
-    </Box>
-  </Column>
-)
-
 const Details = () => {
   const ctx = useCriterion()
   const [activeView, setActiveView] = useState(DetailView.Reviews)
@@ -156,8 +121,7 @@ const Details = () => {
         <DetailTab
           label="Reviews"
           count={ctx.data.reviews.length}
-          view={DetailView.Reviews}
-          activeView={activeView}
+          isActive={activeView === DetailView.Reviews}
           onClick={() => setActiveView(DetailView.Reviews)}
         />
         {/* <DetailTab

@@ -1,8 +1,14 @@
+import { startCase } from 'lodash'
+import moment from 'moment'
 import React from 'react'
-import { Box, Row, createBox, wrapBox } from '../../../ui/Layout'
+import { IconButton, Label, TextItem } from '../../../ui'
+import { Box, Column, Row, createBox, wrapBox } from '../../../ui/Layout'
 import * as Color from '../../../ui/colors'
 import { FaIcon, Icon } from '../../../ui/icons/Icon'
+import { formatTimestamp } from '../../../utils/date-formatter'
+import { copyToClipboard } from '../../../utils/helpers'
 import type * as Studio from '../studio-types'
+import { CurrentUser } from './studio-user-context'
 
 export const DataPolicyIcon = wrapBox(({ accepted }: { accepted: boolean }) => {
   return (
@@ -27,7 +33,8 @@ export const ChargebeeIcon = wrapBox(
     return (
       <Box
         tooltip="Chargebee URL"
-        link={`${baseUrl}/d/customers/${customerId}`}
+        href={`${baseUrl}/d/customers/${customerId}`}
+        target="_blank"
         style={{
           color: '#ccc',
           border: '1px solid #ccc',
@@ -69,7 +76,7 @@ const colorForRole = {
   premium: Color.green.light,
 }
 
-export const RoleBadge = wrapBox(({ role }: { role: string }) => {
+export const SubscriptionBadge = wrapBox(({ role }: { role: string }) => {
   return (
     <Box
       paddingLeft={8}
@@ -91,6 +98,46 @@ export const RoleBadge = wrapBox(({ role }: { role: string }) => {
   )
 })
 
+export const RoleBadge = wrapBox(
+  ({
+    role,
+    onRemove,
+    canRemove = false,
+  }: {
+    role: string
+    onRemove?: () => void
+    canRemove?: boolean
+  }) => {
+    return (
+      <Row
+        paddingLeft={8}
+        paddingRight={8}
+        height={17}
+        alignItems="center"
+        justifyContent="center"
+        style={{
+          fontSize: 10,
+          fontWeight: 600,
+          background: Color.neutral(700),
+          borderRadius: '30px',
+          color: 'white',
+        }}
+      >
+        {startCase(role)}
+        {canRemove && (
+          <IconButton
+            size={14}
+            marginLeft={4}
+            icon="Close"
+            colorWeight={300}
+            onClick={onRemove}
+          />
+        )}
+      </Row>
+    )
+  },
+)
+
 export const DetailLabel = createBox({
   color: 'rgba(255,255,255,60%)',
   fontSize: 12,
@@ -110,7 +157,7 @@ export const OverviewLabel = createBox({
 })
 
 export const OverviewNumber = createBox({
-  fontSize: 44,
+  fontSize: 38,
 })
 
 export const OverviewSuffix = createBox({
@@ -129,31 +176,150 @@ export const OverviewMetric = wrapBox(
   },
 )
 
-export const ListButton = wrapBox(
-  ({
-    children,
-    onClick,
-  }: {
-    children: React.ReactNode
-    onClick?: React.MouseEventHandler
-  }) => {
-    return (
+export const Disabled = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Row
+      style={{ cursor: 'not-allowed', opacity: 0.5 }}
+      width="100%"
+      tooltip="Currently unavailable"
+    >
       <Row
         width="100%"
-        justifyContent="space-between"
         style={{
-          fontSize: 14,
-          opacity: 0.7,
-          cursor: 'pointer',
+          pointerEvents: 'none',
         }}
-        hover={{
-          opacity: 1,
-        }}
-        onClick={onClick}
       >
         {children}
-        <FaIcon size={20} name="faChevronRight" />
       </Row>
-    )
-  },
-)
+    </Row>
+  )
+}
+
+export const ListButton = ({
+  children,
+  onClick,
+}: {
+  children: React.ReactNode
+  onClick?: React.MouseEventHandler
+}) => {
+  return (
+    <Row
+      width="100%"
+      justifyContent="space-between"
+      style={{
+        fontSize: 13,
+        opacity: 0.7,
+        cursor: 'pointer',
+      }}
+      hover={{
+        opacity: 1,
+      }}
+      onClick={onClick}
+    >
+      {children}
+      <FaIcon size={20} name="faChevronRight" />
+    </Row>
+  )
+}
+
+export const getNpsColor = (rating?: number) => {
+  if (!rating) return Color.neutral(500)
+  if (rating < 7) return Color.red.dark
+  if (rating < 9) return Color.yellow.dark
+  return Color.lightstream.toString()
+}
+
+export const CriterionReviewHistory = ({ user }: { user: CurrentUser }) => {
+  const { criterion, createdAtRaw } = user
+
+  const sortedReviews = [...criterion.reviews].sort(
+    (a, b) =>
+      new Date(a.timestamp).getMilliseconds() -
+      new Date(b.timestamp).getMilliseconds(),
+  )
+  const sortedAttempts = [...criterion.attempts].sort(
+    (a, b) =>
+      new Date(a.timestamp).getMilliseconds() -
+      new Date(b.timestamp).getMilliseconds(),
+  )
+
+  const compositeReviews = sortedAttempts.map((x) => ({
+    attempt: x,
+    review: x.reviewed ? sortedReviews.shift() : null,
+  }))
+
+  if (compositeReviews.length === 0) {
+    return <TextItem text="No review history" muted={true} />
+  }
+
+  return (
+    <Column gap={10}>
+      {compositeReviews.map(({ attempt, review }) => {
+        const { localTime, utcTime } = formatTimestamp(attempt.timestamp)
+        const dateDiff = moment(attempt.timestamp).diff(
+          moment(createdAtRaw),
+          'days',
+        )
+
+        return (
+          <Column
+            key={attempt.id}
+            gap={2}
+            padding={8}
+            style={{
+              borderBottom: `1px solid rgba(255,255,255,0.3)`,
+            }}
+          >
+            <Row gap={8} marginBottom={6}>
+              <Box tooltip="Copy attempt date">
+                <IconButton
+                  size={20}
+                  icon="faCalendarAlt"
+                  onClick={() => copyToClipboard(utcTime)}
+                />
+              </Box>
+              <Box tooltip={utcTime}>{localTime}</Box>
+            </Row>
+            <Row gap={8} height={20}>
+              <Label text="Product" width={120} />
+              <TextItem text={attempt.product} />
+            </Row>
+            <Row gap={8} height={20}>
+              <Label text="Account Age" width={120} />
+              <Box tooltip="Age at time of attempt">{dateDiff + ' days'}</Box>
+            </Row>
+            {review && (
+              <Row gap={12} marginTop={6} padding={8}>
+                <Box
+                  alignItems="center"
+                  justifyContent="center"
+                  flexShrink={0}
+                  style={{
+                    borderRadius: '50%',
+                    background: getNpsColor(review.rating),
+                    height: 24,
+                    width: 24,
+                  }}
+                >
+                  <TextItem text={review.rating} fontSize={16} />
+                </Box>
+                {review.comment && <TextItem text={review.comment} />}
+                {!review.comment && <TextItem text="No comment" muted={true} />}
+              </Row>
+            )}
+            {!review && (
+              <Row padding={8}>
+                <TextItem
+                  text="No review submitted"
+                  textTransform="uppercase"
+                  opacity={0.5}
+                  marginTop={6}
+                />
+              </Row>
+            )}
+          </Column>
+        )
+      })}
+    </Column>
+  )
+}

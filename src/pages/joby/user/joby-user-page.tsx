@@ -3,14 +3,15 @@ import * as React from 'react'
 import { useParams } from 'react-router-dom'
 import { useAdmin } from '../../../Admin'
 import { Page } from '../../../Page'
-import { Broadcast, BroadcastsTable } from '../../../components/BroadcastsTable'
+import { BroadcastsTableAsync } from '../../../components/BroadcastsTable'
 import { Button, Heading2, IconButton, Label, TextItem } from '../../../ui'
 import { Box, Column, Row } from '../../../ui/Layout'
 import { BrandBubble } from '../../../ui/icons/BrandBubble'
 import { fetchAPI } from '../../../utils/fetch-api'
+import { Broadcast } from '../../studio/studio-types'
 import {
   ChargebeeIcon,
-  RoleBadge,
+  SubscriptionBadge,
 } from '../../studio/user/studio-user-components'
 import * as Joby from '../joby-types'
 
@@ -245,7 +246,7 @@ const BroadcastsPanel = (props: { userId: string }) => {
     }
   }, [props.userId, page, limit])
   return (
-    <BroadcastsTable
+    <BroadcastsTableAsync
       limit={limit}
       total={broadcasts.length}
       page={page}
@@ -324,7 +325,7 @@ const Header = ({ user }: { user: Joby.User }) => {
         <Column>
           <Row>
             <Heading2 text={user.email} />
-            <RoleBadge
+            <SubscriptionBadge
               marginLeft={20}
               role={bestSub(
                 user.subscriptions.flatMap((s) => s.subscription_items),

@@ -15,6 +15,7 @@ const Underlay = () => {
       style={{
         left: 0,
         top: 0,
+        zIndex: 2,
         width: '100vw',
         height: '100vh',
         position: 'absolute',
@@ -74,6 +75,7 @@ const SidebarContainer = (props: {
         right: 0,
         top: 0,
         padding: 26,
+        zIndex: 2,
         height: '100%',
         position: 'absolute',
         width: state.width || 600,

@@ -53,7 +53,7 @@ export const getTriggers = async () => fetchAPI(`/api/criterion/triggers`) ?? []
 
 export const getReviews = async (numDays = 0) => {
   const date = moment(createDate(numDays)).format('YYYY-MM-DD HH:mm:ss')
-  return fetchAPI(`/api/criterion/reviews?page=0&limit=24&date=${date}`) ?? []
+  return fetchAPI(`/api/criterion/reviews?page=0&limit=100000&date=${date}`) ?? []
 }
 
 export const getStatistics = async (dateRange?: DateRange) =>

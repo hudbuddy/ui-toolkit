@@ -1,8 +1,8 @@
 import * as Rm from '@rainmaker/ui'
 import * as React from 'react'
-import { Page } from '../Page'
-import { useRedirect } from '../router'
-import { IconButton, SearchInput } from '../ui'
+import { Page } from '../../Page'
+import { useRedirect } from '../../router'
+import { IconButton, SearchInput } from '../../ui'
 
 type User = {
   id: string

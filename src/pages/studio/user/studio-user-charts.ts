@@ -23,16 +23,6 @@ export const userBroadcastOverview = (
       currentYear,
       datasets: [
         {
-          label: 'Broadcasts',
-          backgroundColor: '#26ad80',
-          barThickness: 'flex',
-          data: data.map((x, i) => ({
-            ...x,
-            y: x.totalBroadcasts * x.successPercentage,
-            x: labels[i],
-          })),
-        },
-        {
           label: 'Failures',
           borderColor: '#e73C3e',
           borderWidth: 1,
@@ -46,6 +36,16 @@ export const userBroadcastOverview = (
             x: labels[i],
           })),
         },
+        {
+          label: 'Broadcasts',
+          backgroundColor: '#26ad80',
+          barThickness: 'flex',
+          data: data.map((x, i) => ({
+            ...x,
+            y: x.totalBroadcasts * x.successPercentage,
+            x: labels[i],
+          })),
+        },
       ],
     } as ChartData<'bar', UserBroadcastChartData[]>,
     options: {
@@ -53,6 +53,7 @@ export const userBroadcastOverview = (
       scales: {
         x: {
           stacked: true,
+          suggestedMin: 1,
           ticks: {
             display: true,
             maxTicksLimit: 6,
@@ -61,12 +62,13 @@ export const userBroadcastOverview = (
             minRotation: 0,
             padding: 10,
             callback: (_, i) => {
-              return moment(labels[i], 'YYYY-MM-DD').format('MMM YY')
+              return moment(labels[i], 'YYYY-MM-DD').format('MMM \'YY')
             },
           },
         },
         y: {
-          stacked: true
+          stacked: true,
+          beginAtZero: true,
         },
       },
       plugins: {

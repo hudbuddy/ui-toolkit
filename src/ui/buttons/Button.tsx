@@ -1,9 +1,10 @@
 import { classes, keyframes, style } from 'typestyle'
 import { Box } from '../Layout'
 import * as Color from '../colors'
-import { Icon, IconName } from '../icons/Icon'
+import { Icon, IconName, FaIconType } from '../icons/Icon'
 import { TextStyles } from '../text/Text'
 import Style from './button.module.css'
+import { toHref } from '../href-helper'
 
 type TextComponent = typeof Text
 
@@ -76,8 +77,10 @@ type Props = {
   marginTop?: number
   textTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none'
   href?: string
+  target?: '_blank'
   icon?: IconName | null
   iconSize?: number
+  iconType?: FaIconType
   iconPosition?: 'left' | 'right'
   iconColor?: Color.Type
   iconColorWeight?: number
@@ -116,7 +119,9 @@ export const Button = ({
   fontSize,
   iconMargin,
   href,
+  target,
   textTransform,
+  iconType,
   iconColor,
   iconColorWeight,
   iconPosition = 'left',
@@ -272,6 +277,7 @@ export const Button = ({
           <Icon
             color={iconColor}
             colorWeight={iconColorWeight}
+            type={iconType}
             name={icon}
             /* Needed because Kievet font is offset upward */
             nudgeUp={text && !loading ? '0.1em' : 0}
@@ -306,7 +312,8 @@ export const Button = ({
         width,
         minWidth: width || minWidth || 'max-content',
       }}
-      href={href}
+      href={toHref(href)}
+      target={target}
     >
       {node}
     </a>
@@ -367,12 +374,12 @@ export const IconButton = (props: IconButtonProps) => {
 type IconButtonCircleProps = {
   icon: IconName
   iconSize?: number
-} & Partial<ButtonProps>
+  size?: number
+} & Omit<Partial<ButtonProps>, 'height' | 'width'>
 
 export const IconButtonCircle = (props: IconButtonCircleProps) => {
   const {
-    width = 32,
-    height = 32,
+    size,
     iconSize,
     icon = 'Star',
     iconColor,
@@ -387,11 +394,11 @@ export const IconButtonCircle = (props: IconButtonCircleProps) => {
       icon={icon}
       color={color}
       colorWeight={colorWeight}
-      iconSize={iconSize || Math.ceil(height / 1.5)}
+      iconSize={iconSize || Math.ceil(size / 1.5)}
       iconColor={iconColor}
       iconColorWeight={iconColorWeight}
-      height={height}
-      width={width}
+      height={size}
+      width={size}
       effectContrast={2}
       {...passthroughProps}
     />

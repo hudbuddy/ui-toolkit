@@ -3,7 +3,7 @@ import { omitBy, pick } from 'lodash'
 import React from 'react'
 import { style as _style, classes } from 'typestyle'
 import { NestedCSSProperties } from 'typestyle/lib/types'
-import { ItemFactory } from './registry'
+import { toHref } from './href-helper'
 
 type CSSProperties = NestedCSSProperties | React.CSSProperties
 
@@ -17,7 +17,8 @@ type CustomFields = {
   active?: CSSProperties
   className?: string
   tooltip?: string
-  link?: string
+  href?: string
+  target?: '_blank'
   hidden?: boolean
   inline?: boolean
   forwardedRef?: any
@@ -45,6 +46,8 @@ const boxStyleFields = [
   'flexShrink',
   'flexWrap',
   'gap',
+  'rowGap',
+  'columnGap',
   'width',
   'maxWidth',
   'minWidth',
@@ -64,6 +67,7 @@ const boxStyleFields = [
   'fontSize',
   'opacity',
   'position',
+  'overflow',
   'background',
   'cursor',
 ] satisfies Exclude<
@@ -156,7 +160,8 @@ export const Box = ({
   hover,
   active,
   tooltip,
-  link,
+  href,
+  target,
   hidden,
   inline,
   tag,
@@ -165,8 +170,9 @@ export const Box = ({
 }: BoxProps) => {
   const { attributes, styles } = parseFields(fields)
 
-  const Tag = tag ?? (link ? 'a' : 'div')
+  const Tag = tag ?? (href ? 'a' : 'div')
   const content = (
+    // @ts-ignore
     <Tag
       // @ts-ignore
       className={classes(
@@ -186,10 +192,10 @@ export const Box = ({
       style={{
         display: hidden ? 'none' : inline ? 'inline-flex' : 'flex',
       }}
-      {...(link
+      {...(href
         ? {
-            target: '_blank',
-            href: link,
+            target,
+            href: toHref(href),
           }
         : {})}
       {...attributes}

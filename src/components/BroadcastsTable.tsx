@@ -3,77 +3,24 @@ import moment from 'moment'
 import * as React from 'react'
 import { useAdmin } from '../Admin'
 import { useSidebar } from '../SideBar'
-import { Platform } from '../pages/studio/studio-types'
+import * as Studio from '../pages/studio/studio-types'
 import {
   BasicModal,
   Body,
   Button,
   CancelButton,
   Heading2,
+  Icon,
   IconButton,
+  IconButtonCircle,
   Label,
   TextInput,
   TextItem,
 } from '../ui'
 import { Box, BrandBubble, BrandBubbleList, Column, Row } from '../ui/'
 import { copyToClipboard } from '../utils/helpers'
-
-/**
- * Broadcast report object from the analytics database in Cloud SQL (PostgreSQL).
- */
-export type Broadcast = {
-  broadcastId: string
-  /** The title of the project being used to broadcast. */
-  title: string
-  /**  The amount of time the broadcast has been live (formatted). */
-  length: string
-  /** The length of the stream in milliseconds. */
-  rawLength: 7862
-  /** or string */
-  startDate: Date
-  /** or string */
-  rawStartDate: Date
-  /**
-   * if 'rtmp indicator-jobystudio' then joby studio
-   */
-  iconClass: string
-  aborted: boolean
-  activeSceneAssets?: any[]
-  canceled: boolean
-  destinations?: Platform[]
-  engineInfo?: any
-  failed: boolean
-  followers?: number
-  isJobyStudio?: boolean
-  isStudioV2?: boolean
-  origin: string
-  platform: string
-  projectId?: string
-  projectType: string
-  providerId?: string
-  region: string
-  searchLink?: string
-  service: string
-  sessionId: string
-  shortTitle: string
-  shortUser: string
-  url?: string
-  user: string
-  userId: string
-  webrtcUrl?: string
-  weekday?: string
-  createDetails?: {
-    cause: string
-    origin: string
-    region: string
-  }
-  stopDetails?: {
-    cause: string
-    origin: string
-    reason: string
-  }
-  rawData: object
-}
+import { RawData } from './RawData'
+import { useNavigate } from 'react-router-dom'
 
 // ************************
 // * Flag Broadcast Modal *
@@ -83,7 +30,7 @@ const FlagBroadcastDialog = ({
   broadcast,
   onComplete,
 }: {
-  broadcast: Broadcast
+  broadcast: Studio.Broadcast
   onComplete: () => void
 }) => {
   const [report, setReport] = React.useState('')
@@ -159,7 +106,7 @@ const DetailsRow = ({ prop, value }: { prop: string; value: any }) => {
   const printed = React.useMemo(
     () =>
       typeof value === 'object'
-        ? JSON.stringify(value, undefined, 2)
+        ? JSON.stringify(value, undefined, '\t')
         : value.toString(),
     [value],
   )
@@ -176,15 +123,18 @@ const DetailsRow = ({ prop, value }: { prop: string; value: any }) => {
       <Box minWidth={110}>
         <Label text={prop} />
       </Box>
-      <Body text={printed} selectOnClick={true} />
+      {typeof value !== 'object' && (
+        <Body text={printed} selectOnClick={true} />
+      )}
+      {typeof value === 'object' && <RawData data={value} />}
     </Row>
   )
 }
 
-const BroadcastDetails: React.FC<{ broadcast: Broadcast }> = ({
+const BroadcastDetails: React.FC<{ broadcast: Studio.Broadcast }> = ({
   broadcast,
 }: {
-  broadcast: Broadcast
+  broadcast: Studio.Broadcast
 }) => {
   React.useEffect(() => {}, [broadcast])
   return (
@@ -210,7 +160,8 @@ const BroadcastDetails: React.FC<{ broadcast: Broadcast }> = ({
 // * Broadcasts Table *
 // ********************
 
-const BroadcastRow = ({ item }: { item: Broadcast; odd: boolean }) => {
+const BroadcastRow = ({ item }: { item: Studio.Broadcast; odd: boolean }) => {
+  const navigate = useNavigate()
   const { setSidebar } = useSidebar()
 
   const localTime = moment
@@ -225,7 +176,7 @@ const BroadcastRow = ({ item }: { item: Broadcast; odd: boolean }) => {
       setSidebar({
         header: (
           <Row alignItems="center">
-            <BrandBubbleList names={item.destinations} />
+            <BrandBubbleList names={item.destinations || [item.platform]} />
             <Column style={{ marginLeft: 10 }}>
               <TextItem fontSize={22} text={item.user} />
               <TextItem fontSize={14} opacity={0.7} text={item.title} />
@@ -256,69 +207,98 @@ const BroadcastRow = ({ item }: { item: Broadcast; odd: boolean }) => {
     <>
       <Rm.TableRowItem>
         <Row gap={12}>
+          {/* Destination Icons */}
           <Box position="relative">
-            <BrandBubbleList size={30} names={item.destinations} />
-            {/* TODO: Only if projectType === 'mixer' */}
-            <Box
-              position="absolute"
-              style={{
-                right: -3,
-                top: -3,
-              }}
-            >
-              <BrandBubble name="xbox" size={14} />
-            </Box>
+            {item.aborted && (
+              <Box
+                position="absolute"
+                tooltip="Aborted"
+                style={{
+                  marginTop: -12,
+                  top: '50%',
+                  left: -26,
+                }}
+              >
+                <Icon
+                  name="Close"
+                  color="secondary"
+                  // type="solid"
+                  size={24}
+                  colorWeight={500}
+                />
+              </Box>
+            )}
+            <BrandBubbleList
+              size={30}
+              names={item.destinations || [item.platform]}
+            />
+            {item.projectType === 'mixer' && (
+              <Box
+                position="absolute"
+                style={{
+                  right: -3,
+                  top: -3,
+                }}
+              >
+                <BrandBubble name="xbox" size={14} />
+              </Box>
+            )}
           </Box>
-          {item.title ? (
-            <Body
-              ellipsis={true}
-              text={item.shortTitle ? item.shortTitle : item.title}
+          <Column>
+            <TextItem
+              href={`/studio/users/${item.userId}`}
+              target="_blank"
+              fontSize={15}
+              text={item.user}
             />
-          ) : (
-            <Body text="No title" opacity={0.7} />
-          )}
+            {item.title ? (
+              <TextItem
+                ellipsis={true}
+                maxWidth={200}
+                muted={true}
+                text={item.shortTitle ? item.shortTitle : item.title}
+              />
+            ) : (
+              <TextItem text="No title" opacity={0.5} />
+            )}
+          </Column>
         </Row>
       </Rm.TableRowItem>
-      <Rm.TableRowItem width={50}>
-        <Row alignItems="center">
-          <Rm.Tooltip position="top" message="region" variant="detailed">
-            <IconButton icon="faGlobeAmericas" />
-          </Rm.Tooltip>
-          {item.region}
+      <Rm.TableRowItem width={80}>
+        {/* Region */}
+        <Row tooltip="Region">
+          <TextItem
+            text={item.region}
+            icon="faGlobeAmericas"
+            iconColorWeight={400}
+          />
         </Row>
       </Rm.TableRowItem>
-      <Rm.TableRowItem width={150}>
-        <Row alignItems="center">
-          <Rm.Tooltip
-            position="top"
-            message={`Started at: ${utcTime}`}
-            variant="detailed"
-          >
-            <IconButton
-              icon="faCalendarAlt"
-              onClick={() => copyToClipboard(utcTime)}
-            />
-            {localTime}
-          </Rm.Tooltip>
+      <Rm.TableRowItem width={200}>
+        <Row tooltip={`Started at: ${utcTime}`}>
+          <TextItem
+            text={localTime}
+            icon="faCalendarAlt"
+            iconColorWeight={400}
+            cursor="pointer"
+            onClick={() =>
+              copyToClipboard(utcTime, 'Start date copied to clipboard as UTC')
+            }
+          />
         </Row>
       </Rm.TableRowItem>
       <Rm.TableRowItem width={100}>
-        <Row alignItems="center">
-          <IconButton icon="faClock" />
-          {item.length}
+        <Row tooltip="Runtime">
+          <TextItem text={item.length} icon="faClock" iconColorWeight={400} />
         </Row>
       </Rm.TableRowItem>
       <Rm.TableRowItem width={50}>
-        <Rm.Tooltip
-          position="top"
-          message="View Broadcast Details"
-          variant="detailed"
-        >
+        <Row tooltip="View Broadcast Details">
           <IconButton icon="faInfo" onClick={viewDetails} />
-        </Rm.Tooltip>
+        </Row>
       </Rm.TableRowItem>
       <Rm.TableRowItem width={50}>
-        <Rm.Tooltip position="top" message="Flag Broadcast" variant="detailed">
+        <Row tooltip="Flag Broadcast">
           <IconButton icon="faFlag" onClick={() => setIsFlagModalOpen(true)} />
           <BasicModal
             showX={true}
@@ -330,35 +310,79 @@ const BroadcastRow = ({ item }: { item: Broadcast; odd: boolean }) => {
               onComplete={() => setIsFlagModalOpen(false)}
             />
           </BasicModal>
-        </Rm.Tooltip>
+        </Row>
       </Rm.TableRowItem>
       <Rm.TableRowItem width={50}>
-        <Rm.Tooltip
-          position="top"
-          message="Copy Broadcast ID"
-          variant="detailed"
-        >
+        <Row tooltip="Copy Broadcast ID">
           <IconButton icon="faFingerprint" onClick={copyBroadcastId} />
-        </Rm.Tooltip>
+        </Row>
       </Rm.TableRowItem>
       <Rm.TableRowItem width={50}>
-        <Rm.Tooltip
-          position="top"
-          message="Copy Slack Broadcast Search"
-          variant="detailed"
-        >
+        <Row tooltip="Copy Slack Broadcast Search">
           <IconButton icon="faSearch" onClick={copySlackSearch} />
-        </Rm.Tooltip>
+        </Row>
+      </Rm.TableRowItem>
+      <Rm.TableRowItem width={50}>
+        <Box tooltip="View project">
+          <IconButtonCircle
+            marginLeft={5}
+            size={28}
+            icon="faExternalLink"
+            onClick={(e) => {
+              navigate(`/v2/studio/users/${item.userId}`)
+              window.setTimeout(() => {
+                navigate(
+                  `/v2/studio/users/${item.userId}/projects/${item.projectId}`,
+                  { replace: true },
+                )
+              })
+            }}
+          />
+        </Box>
       </Rm.TableRowItem>
     </>
   )
 }
 
-export const BroadcastsTable = (props: {
+// Broadcast table that receives all broadcasts and self-manages state
+export const BroadcastsTable = ({
+  limit = 25,
+  broadcasts = [],
+}: {
+  limit?: number
+  broadcasts: Studio.Broadcast[]
+}) => {
+  const [_limit, setLimit] = React.useState(limit)
+  const [page, setPage] = React.useState(0)
+
+  const tableData = React.useMemo(
+    () => broadcasts.slice(page * limit, (page + 1) * limit),
+    [page, limit, broadcasts],
+  )
+
+  return (
+    <Rm.PaginatedTable
+      limit={_limit}
+      total={broadcasts.length}
+      defaultSort={'startDate:broadcastId'}
+      fetching={false}
+      page={page}
+      data={tableData}
+      onChange={({ page, limit }) => {
+        setPage(page)
+        setLimit(limit)
+      }}
+      rowComponent={BroadcastRow}
+    />
+  )
+}
+
+// Broadcast table that reports changes for async data fetching
+export const BroadcastsTableAsync = (props: {
   limit: number
   total: number
   page: number
-  data: Broadcast[]
+  data: Studio.Broadcast[]
   onChange: (data: { page: number; limit: number; order?: string }) => void
 }) => {
   return (

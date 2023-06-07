@@ -18,10 +18,6 @@ export type CheckboxProps = {
   color?: Color.Type
   colorWeight?: number
   focusIndicator?: boolean
-  // Area filled as a scalar
-  iconScale?: number
-  // Opacity of icon in unchecked state (for use with with appearance="icon")
-  iconUncheckedOpacity?: number
   children?: JSX.Element
 }
 

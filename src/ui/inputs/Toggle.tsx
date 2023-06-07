@@ -98,8 +98,6 @@ const Toggle = ({
             onChange={() => {
               /*Triggered by onClick of container*/
             }}
-            iconUncheckedOpacity={1}
-            iconScale={1}
             height={height - padding * 2}
             content={
               <Icon

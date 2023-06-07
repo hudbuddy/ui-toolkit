@@ -7,6 +7,7 @@ import {
   Checkbox,
   Color,
   Heading2,
+  Heading3,
   IconButton,
   Label,
   TextItem,
@@ -17,6 +18,9 @@ import { copyToClipboard } from '../../utils/helpers'
 import { User } from '../studio/studio-types'
 import { useCriterion } from './criterion-context'
 import { Review } from './criterion-data'
+import { formatTimestamp } from '../../utils/date-formatter'
+import { CriterionReviewHistory } from '../studio/user/studio-user-components'
+import { StudioUserProvider, useStudio, useStudioUser } from '../studio/user/studio-user-context'
 
 export const CriterionReviews = () => {
   const ctx = useCriterion()
@@ -47,28 +51,23 @@ export const CriterionReviews = () => {
 const ReviewItem = ({ item }: { item: Review }) => {
   const { setSidebar } = useSidebar()
   const userUrl = `/studio/users/${item.userId}`
-  const localTime = moment
-    .utc(item.timestamp)
-    .local()
-    .format('MMM D YYYY h:mm A')
-  const utcTime =
-    moment.utc(item.timestamp).format('MMM D YYYY h:mm A') + ' UTC'
+  const { localTime, utcTime } = formatTimestamp(item.timestamp)
 
   const DetailsBody = useRef(() => {
-    const user = useAPI<User>('/api/users/' + item.userId, [])
+    const user = useStudioUser(item.userId)
     const dateDiff = user
       ? moment(item.timestamp).diff(moment(user.createdAt), 'days')
       : null
 
     return (
-      <Column>
+      <Column gap={8}>
         <Row gap={8} height={40}>
           <Label text="Rating" width={120} />
           <TextItem text={item.rating} fontSize={18} marginLeft={6} />
         </Row>
         <Row gap={8} height={40}>
           <Label text="User" width={120} />
-          <Box link={userUrl} tooltip="View user page">
+          <Box href={userUrl} target="_blank" tooltip="View user page">
             <IconButton size={30} icon="faUserCircle" />
           </Box>
           <TextItem text={item.userId} selectOnClick={true} />
@@ -89,27 +88,31 @@ const ReviewItem = ({ item }: { item: Review }) => {
           <Box tooltip="Age at time of review">
             {dateDiff ? dateDiff + ' days' : 'Loading...'}
           </Box>
-          {/* TODO: */}
         </Row>
-        <Row gap={8} height={40}>
+        <Row gap={8} minHeight={40}>
           <Label text="Comment" width={120} />
           {item.comment && <Body text={item.comment} />}
           {!item.comment && (
             <Body text="No comment" italic={true} opacity={0.3} />
           )}
         </Row>
+        <Column marginTop={30} gap={10}>
+          <Heading3 text="User Review History" />
+          {!user && <TextItem muted={true} text="Loading..." />}
+          {user && <CriterionReviewHistory user={user} />}
+        </Column>
       </Column>
     )
   })
 
   const viewDetails = () => {
     setSidebar({
-      header: (
-        <Row alignItems="center">
-          <Heading2 text="User Review" />
-        </Row>
+      header: <Heading2 text="User Review" />,
+      body: (
+        <StudioUserProvider>
+          <DetailsBody.current />
+        </StudioUserProvider>
       ),
-      body: <DetailsBody.current />,
     })
   }
 
@@ -145,7 +148,12 @@ const ReviewItem = ({ item }: { item: Review }) => {
         </RM.Tooltip>
       </RM.TableRowItem>
       <RM.TableRowItem width={30}>
-        <Box link={userUrl} cursor="pointer" tooltip="View user page">
+        <Box
+          href={userUrl}
+          target="_blank"
+          cursor="pointer"
+          tooltip="View user page"
+        >
           <IconButton size={30} icon="faUserCircle" />
         </Box>
       </RM.TableRowItem>

@@ -1,6 +1,6 @@
 import 'react'
+import { Heading2 } from './ui'
 import { Row } from './ui/Layout'
-import { Heading2, Heading3 } from './ui'
 
 export const Page = ({
   title,
@@ -22,23 +22,31 @@ export const Page = ({
         width: '100%',
       }}
     >
-      {title && showTitle && (
-        <Row>
-          <Heading2
-            text={title}
-            style={{
-              marginBottom: 26,
-            }}
-          />
-        </Row>
-      )}
       <div
         style={{
           flexGrow: 1,
           overflowY: 'auto',
         }}
       >
-        {children}
+        {title && showTitle && (
+          <Row
+            position="sticky"
+            style={{ top: 0, height: 32, background: '#2c2c3c', zIndex: 3, alignItems: 'flex-start' }}
+          >
+            <Heading2 text={title} />
+          </Row>
+        )}
+        <div
+          className="page-content"
+          style={{
+            width: '100%',
+            height: '100%',
+            maxWidth: 1400,
+            paddingRight: 32,
+          }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   )

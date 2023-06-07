@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Box, Heading2 } from './ui'
+import { fetchAPI } from './utils/fetch-api'
 
 type Admin = {
   id: string
@@ -39,10 +40,14 @@ const adminReducer: React.Reducer<Admin, Admin> = (prevState, action) =>
 
 export const AdminProvider = (props: { children: React.ReactNode }) => {
   const [admin, setAdmin] = React.useReducer(adminReducer, null)
+
   React.useEffect(() => {
-    fetch(`/api/admins/me`)
-      .then((res) => res.json())
+    fetchAPI(`/api/admins/me`)
       .then(setAdmin)
+      .catch(() => {
+        // @ts-ignore
+        window.location = '/login/google'
+      })
   }, [])
 
   return (

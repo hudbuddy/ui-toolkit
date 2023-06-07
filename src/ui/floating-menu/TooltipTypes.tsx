@@ -42,6 +42,7 @@ const Default = (props: DefaultProps) => {
             marginTop={5}
             text={props.linkTitle}
             href={props.link}
+            target="_blank"
             color="primary"
             style={{ textDecoration: 'none', cursor: 'pointer' }}
             fontWeight={700}

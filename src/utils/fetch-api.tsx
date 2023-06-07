@@ -7,21 +7,29 @@
  *   - Resolves to JSON
  */
 
+const GLOBAL_TIMEOUT = 10000
+
 import { useState, useEffect } from 'react'
 
 export type APIRequestOptions = Omit<RequestInit, 'body'> & {
   body?: { [key: string]: any } | RequestInit['body']
   headers?: { [name: string]: string }
+  timeout?: number
 }
 
 export const fetchAPI = (
   path: string,
   requestOptions: APIRequestOptions = {},
+  defaultValue?: any,
 ) => {
+  const { timeout = GLOBAL_TIMEOUT } = requestOptions
   const body =
     typeof requestOptions.body === 'string'
       ? requestOptions.body
       : JSON.stringify(requestOptions.body)
+
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), timeout)
 
   return fetch(path, {
     ...requestOptions,
@@ -31,10 +39,18 @@ export const fetchAPI = (
       ...(requestOptions.headers ?? {}),
     }),
     ...(body ? ({ body } as any) : {}),
-  }).then(async (resp) => {
-    if (!resp.ok) throw Error('Request failed')
-    return resp ? resp.json() : null
+    signal: controller.signal,
   })
+    .then(async (resp) => {
+      clearTimeout(id)
+      if (!resp.ok) throw Error('Request failed')
+      return resp ? resp.json() : null
+    })
+    .catch((e) => {
+      clearTimeout(id)
+      if (typeof defaultValue !== 'undefined') return defaultValue
+      throw e
+    })
 }
 
 export const useAPI = <T extends {} = {}>(

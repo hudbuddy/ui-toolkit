@@ -77,7 +77,7 @@ export const BrandBubble = wrapBox(({ name, size = 34 }: Props) => {
 })
 
 export const BrandBubbleList = wrapBox(
-  ({ names, size = 34 }: { names: BrandName[]; size?: number }) => {
+  ({ names = [], size = 34 }: { names: BrandName[]; size?: number }) => {
     const margin = -size / 5
 
     return (

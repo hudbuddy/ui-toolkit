@@ -1,21 +1,13 @@
 import { ChartData, ChartOptions } from 'chart.js'
 import 'chart.js/auto'
+import moment from 'moment'
 import * as React from 'react'
 import { Line } from 'react-chartjs-2'
 import { Page } from '../../../Page'
-import { Broadcast, BroadcastsTable } from '../../../components/BroadcastsTable'
-import {
-  Box,
-  Column,
-  Heading1,
-  Heading2,
-  Heading3,
-  Label,
-  BrandBubble,
-  Row,
-  TextItem
-} from '../../../ui'
-import { Platform } from '../studio-types'
+import { BroadcastsTable } from '../../../components/BroadcastsTable'
+import { Box, BrandBubble, Column, Label, Row, TextItem } from '../../../ui'
+import { fetchAPI } from '../../../utils/fetch-api'
+import * as Studio from '../studio-types'
 
 // **********************
 // * API RESPONSE TYPES *
@@ -35,15 +27,13 @@ type HistogramResponseItem = {
 // * API CALLS *
 // *************
 
-async function getBroadcasts(): Promise<Broadcast[]> {
-  const response = await fetch(`/api/broadcasts`)
-  const body: Broadcast[] = (await response.json()) ?? []
-  return body
+async function getBroadcasts(): Promise<Studio.Broadcast[]> {
+  return fetchAPI(`/api/broadcasts`, { timeout: 20000 }, [])
 }
 
 type BroadcastsContext = {
-  broadcasts: Broadcast[]
-  setBroadcasts: (broadcasts: Broadcast[]) => void
+  broadcasts: Studio.Broadcast[]
+  fetchBroadcasts: () => Promise<void>
 }
 
 const BroadcastsContext = React.createContext<BroadcastsContext>(null)
@@ -86,44 +76,34 @@ const Panel = (props: { children: React.ReactNode }) => {
 // * Broadcasts List *
 // *******************
 
-const broadcastReducer: React.Reducer<Broadcast[], Broadcast[]> = (p, a) =>
-  a || p
+const broadcastReducer: React.Reducer<
+  Studio.Broadcast[],
+  Studio.Broadcast[]
+> = (p, a) => a || p
 
-const BroadcastsProvider = (props: { children: React.ReactNode }) => {
+export const BroadcastsProvider = (props: { children: React.ReactNode }) => {
   const [broadcasts, setBroadcasts] = React.useReducer(broadcastReducer, [])
+
+  const fetchBroadcasts = React.useCallback(() => {
+    return getBroadcasts().then(setBroadcasts)
+  }, [])
+
+  React.useEffect(() => {
+    fetchBroadcasts()
+  }, [])
+
   return (
-    <BroadcastsContext.Provider value={{ broadcasts, setBroadcasts }}>
+    <BroadcastsContext.Provider value={{ broadcasts, fetchBroadcasts }}>
       {props.children}
     </BroadcastsContext.Provider>
   )
 }
 
+export const useBroadcasts = () => React.useContext(BroadcastsContext)
+
 const BroadcastsPanel = () => {
-  const [limit, setLimit] = React.useState(25)
-  const { broadcasts, setBroadcasts } = React.useContext(BroadcastsContext)
-  const [page, setPage] = React.useState(0)
-
-  React.useEffect(() => {
-    getBroadcasts().then(setBroadcasts)
-  }, [page, limit])
-
-  const tableData = React.useMemo(
-    () => broadcasts.slice(page * limit, (page + 1) * limit),
-    [page, limit, broadcasts],
-  )
-
-  return (
-    <BroadcastsTable
-      page={page}
-      limit={limit}
-      data={tableData}
-      total={broadcasts.length}
-      onChange={({ page, limit }) => {
-        setPage(page)
-        setLimit(limit)
-      }}
-    />
-  )
+  const { broadcasts } = React.useContext(BroadcastsContext)
+  return <BroadcastsTable broadcasts={broadcasts} />
 }
 
 // **************
@@ -145,16 +125,56 @@ const LineChart = (props: { data: HistogramResponseItem[] }) => {
             label: 'Average',
             pointBackgroundColor: '#26ad80',
             pointBorderColor: 'white',
-            backgroundColor: '#26ad80',
+            backgroundColor: '#26ad8033',
             borderColor: '#26ad80',
+            fill: true,
             data: data.map((d) => Number(d)),
           },
         ],
       } as ChartData<'line', number[], string>,
       options: {
-        legend: {
-          display: false,
+        elements: {
+          point: {
+            radius: 0,
+            hitRadius: 5,
+            hoverRadius: 5,
+          },
         },
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            displayColors: false,
+            titleMarginBottom: 8,
+            padding: 12,
+            callbacks: {
+              title(context) {
+                return moment(context[0].label).format('llll')
+              },
+            },
+          },
+        },
+        scales: {
+          y: {
+            min: 0,
+            ticks: {
+              stepSize: 1,
+            },
+          },
+          x: {
+            type: 'timeseries',
+            time: {
+              unit: 'hour',
+            },
+            ticks: {
+              maxTicksLimit: 4,
+              display: true,
+            },
+          },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
         pointLabels: {
           display: false,
         },
@@ -181,18 +201,23 @@ const HistogramPanel = () => {
     getHistogram().then(setData)
   }, [])
   return (
-    <div style={{ flexGrow: 2, marginLeft: 10 }}>
-      <Panel>
-        <Heading3 text="Broadcasts Past 24 Hours" />
-        <Box height={350} width="100%">
+    <Panel>
+      <Column height="100%" width="100%" gap={10}>
+        <TextItem
+          text="Broadcasts Past 24 Hours"
+          textTransform="uppercase"
+          opacity={0.7}
+          fontSize={13}
+        />
+        <Box height={270} width="100%" position="relative" overflow="hidden">
           <LineChart data={data} />
         </Box>
-      </Panel>
-    </div>
+      </Column>
+    </Panel>
   )
 }
 
-const DestinationCount = (props: { type: Platform }) => {
+const DestinationCount = (props: { type: Studio.Platform }) => {
   const { broadcasts } = React.useContext(BroadcastsContext)
   const total = React.useMemo(
     () => broadcasts.filter((d) => d.platform === props.type).length,
@@ -218,22 +243,34 @@ const CurrentBroadcastsPanel = () => {
 
   return (
     <Panel>
-      <Heading3 text="Current Broadcasts" />
-      <Row style={{ marginTop: 10 }}>
-        <Heading1 text={broadcasts.length} />
-        <Column>
-          <Heading2 text={over6Hours} />
-          <Label text="Over 6 hours" />
-        </Column>
-      </Row>
-      <Column style={{ marginTop: 10 }}>
-        <Label text="Destination Breakdown" />
-        <Row style={{ marginTop: 10 }} gap={8}>
-          <DestinationCount type={Platform.Twitch} />
-          <DestinationCount type={Platform.Facebook} />
-          <DestinationCount type={Platform.YouTube} />
-          <DestinationCount type={Platform.CustomRTMP} />
+      <TextItem
+        text="Current Broadcasts"
+        textTransform="uppercase"
+        opacity={0.7}
+        fontSize={13}
+      />
+      <Column justifyContent="space-between" flexGrow={1}>
+        <Row style={{ marginTop: 10 }} gap={20}>
+          <TextItem text={broadcasts.length} fontSize={64} />
+          <Column justifyContent="space-between">
+            <TextItem text={over6Hours} fontSize={24} color="warning" />
+            <TextItem
+              text="Over 6 hours"
+              maxWidth={70}
+              muted={true}
+              lineHeight={1}
+            />
+          </Column>
         </Row>
+        <Column style={{ marginTop: 10 }}>
+          <Label text="Destination Breakdown" />
+          <Row style={{ marginTop: 10 }} gap={8}>
+            <DestinationCount type={Studio.Platform.Twitch} />
+            <DestinationCount type={Studio.Platform.Facebook} />
+            <DestinationCount type={Studio.Platform.YouTube} />
+            <DestinationCount type={Studio.Platform.CustomRTMP} />
+          </Row>
+        </Column>
       </Column>
     </Panel>
   )
@@ -244,15 +281,20 @@ export const BroadcastsPage = () => {
     <BroadcastsProvider>
       <Page title="Active Broadcasts" showTitle={true}>
         <Row
+          height={250}
+          gap={20}
           style={{
-            flexWrap: 'nowrap',
             justifyContent: 'flex-start',
             alignItems: 'stretch',
-            marginBottom: 10,
+            marginBottom: 20,
           }}
         >
-          <CurrentBroadcastsPanel />
-          <HistogramPanel />
+          <Box flex="0 0 220px">
+            <CurrentBroadcastsPanel />
+          </Box>
+          <Box flexGrow={1} overflow="hidden">
+            <HistogramPanel />
+          </Box>
         </Row>
         <BroadcastsPanel />
       </Page>
